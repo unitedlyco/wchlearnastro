@@ -18,4 +18,17 @@ export default defineConfig({
       },
     }),
   ],
+  vite: {
+    // ... existing vite config
+  },
+  head: [
+    {
+      tag: 'link',
+      attrs: {
+        rel: 'icon',
+        type: 'image/png',
+        href: '/@favicon.png'
+      }
+    }
+  ]
 });

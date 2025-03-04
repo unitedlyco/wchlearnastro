@@ -26,11 +26,17 @@ type Props = {
 }
 // Page Metadata
 const { title, description, ogImage, noindex } = Astro.props
+
+// Get the background color from your theme/config
+const themeColor = configData.mode === 'dark' ? '#000000' : '#ffffff' // Adjust these colors based on your actual theme
 ---
 
 <!doctype html>
 <html lang="en" class="scroll-animation mode-auto">
-	<Header title={title} description={description} ogImage={ogImage} noindex={noindex} />
+	<head>
+		<meta name="theme-color" content={themeColor} />
+		<Header title={title} description={description} ogImage={ogImage} noindex={noindex} />
+	</head>
 	<body
 		class:list={[
 			{ ['mode-' + `${configData.mode}`]: configData.mode },
