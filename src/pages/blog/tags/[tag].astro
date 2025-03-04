@@ -37,6 +37,9 @@ interface WordPressPost {
   };
 }
 
+// Enable prerendering for static builds
+export const prerender = true;
+
 // Get all categories for static paths
 export async function getStaticPaths() {
 	const client = new WordPressGraphQLClient();

@@ -47,6 +47,9 @@ interface PaginateFunction {
   paginate: (data: any[], options: { pageSize: number }) => any[];
 }
 
+// Enable prerendering for static builds
+export const prerender = true;
+
 export async function getStaticPaths({ paginate }: PaginateFunction) {
   const client = new WordPressGraphQLClient();
   const response = await client.getAllPosts(100); // Get all posts for pagination

@@ -76,7 +76,8 @@ export const getStaticPaths = async ({ paginate }: PaginateParams) => {
   };
 };
 
-export const prerender = false;
+// Enable static rendering
+export const prerender = true;
 ---
 
 <Layout title={SEO.title} description={SEO.description}>
