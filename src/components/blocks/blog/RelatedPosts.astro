@@ -17,11 +17,29 @@ type Props = {
   limit?: number;
 };
 
+// Define types for WordPress post data
+interface WordPressPost {
+  slug: string;
+  title: string;
+  featuredImage?: {
+    node?: {
+      sourceUrl?: string;
+    };
+  };
+}
+
+// Define type for related posts
+interface RelatedPost {
+  id: string;
+  title: string;
+  image: string;
+}
+
 const { categories = [], currentPostId, limit = 4 } = Astro.props;
 
 // Fetch related posts
 const client = new WordPressGraphQLClient();
-let relatedPosts = [];
+let relatedPosts: RelatedPost[] = [];
 
 if (categories.length > 0) {
   // Get the first category to query
@@ -33,9 +51,9 @@ if (categories.length > 0) {
     if (response.category && response.category.posts) {
       // Filter out the current post and limit the number of results
       relatedPosts = response.category.posts.nodes
-        .filter(post => post.slug !== currentPostId)
+        .filter((post: WordPressPost) => post.slug !== currentPostId)
         .slice(0, limit)
-        .map(post => ({
+        .map((post: WordPressPost) => ({
           id: post.slug,
           title: post.title,
           image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
@@ -50,7 +68,7 @@ if (categories.length > 0) {
 <div class="related-posts">
   {relatedPosts.length > 0 ? (
     <div class="related-posts__grid">
-      {relatedPosts.map(post => (
+      {relatedPosts.map((post: RelatedPost) => (
         <a href={`/blog/${post.id}`} class="related-post">
           <div class="related-post__image-container">
             <img 

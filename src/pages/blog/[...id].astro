@@ -10,13 +10,37 @@ import Layout from '../../layouts/PostLayout.astro'
 // WordPress GraphQL Client
 import WordPressGraphQLClient from '../../lib/wordpress.js'
 
+// Define types for WordPress post data
+interface WordPressPost {
+	slug: string;
+	title: string;
+	excerpt: string;
+	date: string;
+	content: string;
+	featuredImage?: {
+		node?: {
+			sourceUrl?: string;
+		};
+	};
+	author?: {
+		node?: {
+			name?: string;
+		};
+	};
+	categories?: {
+		nodes?: Array<{
+			name: string;
+		}>;
+	};
+}
+
 // Get all posts for static paths
 export async function getStaticPaths() {
 	const client = new WordPressGraphQLClient();
 	const response = await client.getAllPosts(100); // Adjust number as needed
 	const posts = response.posts.nodes;
 
-	return posts.map((post) => ({
+	return posts.map((post: WordPressPost) => ({
 		params: { id: post.slug },
 		props: { slug: post.slug }
 	}))
@@ -37,7 +61,7 @@ const frontmatter = {
 	pubDate: new Date(post.date),
 	image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
 	author: post.author?.node?.name || 'WCH Team',
-	tags: post.categories?.nodes?.map(cat => cat.name) || []
+	tags: post.categories?.nodes?.map((cat: { name: string }) => cat.name) || []
 }
 
 // The post content

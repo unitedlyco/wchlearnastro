@@ -8,11 +8,17 @@ import Badge from '../Badge.astro'
 // WordPress GraphQL Client
 import WordPressGraphQLClient from '../../../lib/wordpress.js'
 
+// Define types for WordPress category data
+interface WordPressCategory {
+	name: string;
+	slug: string;
+}
+
 // Fetch categories from WordPress
 const client = new WordPressGraphQLClient();
 const response = await client.getAllCategories();
 const categories = response.categories.nodes;
-const tags = categories.map(cat => cat.name);
+const tags = categories.map((cat: WordPressCategory) => cat.name);
 
 const currentPath = new URL(Astro.request.url).pathname
 const pathSegments = currentPath.split('/').filter((segment) => segment.length > 0)
@@ -22,7 +28,7 @@ const currentTag = pathSegments[pathSegments.length - 1] || ''
 <div class="tags">
 	<Badge link={`/blog/`} name={`All`} type={`${currentTag === 'blog' ? 'primary' : 'neutral'}`} />
 	{
-		categories.map((category) => (
+		categories.map((category: WordPressCategory) => (
 			<>
 				<Badge
 					link={`/blog/tags/${category.slug}`}

@@ -8,12 +8,51 @@ import Pagination from '../../components/ui/Pagination.astro';
 // Import the WordPress client
 import WordPressGraphQLClient from '../../lib/wordpress.js';
 
-export async function getStaticPaths({ paginate }) {
+// Define types for WordPress post data
+interface WordPressPost {
+  slug: string;
+  title: string;
+  excerpt: string;
+  date: string;
+  featuredImage?: {
+    node?: {
+      sourceUrl?: string;
+    };
+  };
+  author?: {
+    node?: {
+      name?: string;
+    };
+  };
+  categories?: {
+    nodes?: Array<{
+      name: string;
+    }>;
+  };
+}
+
+// Define type for pagination
+interface PaginationProps {
+  data: any[];
+  currentPage: number;
+  lastPage: number;
+  url: {
+    prev: string | undefined;
+    next: string | undefined;
+  };
+}
+
+// Define type for paginate function
+interface PaginateFunction {
+  paginate: (data: any[], options: { pageSize: number }) => any[];
+}
+
+export async function getStaticPaths({ paginate }: PaginateFunction) {
   const client = new WordPressGraphQLClient();
   const response = await client.getAllPosts(100); // Get all posts for pagination
   
   // Map WordPress posts to the format your components expect
-  const allPosts = response.posts.nodes.map(post => ({
+  const allPosts = response.posts.nodes.map((post: WordPressPost) => ({
     id: post.slug,
     data: {
       title: post.title,
@@ -21,7 +60,7 @@ export async function getStaticPaths({ paginate }) {
       pubDate: new Date(post.date),
       image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
       author: post.author?.node?.name || 'WCH Team',
-      tags: post.categories?.nodes?.map(cat => cat.name) || []
+      tags: post.categories?.nodes?.map((cat: { name: string }) => cat.name) || []
     }
   }));
   
@@ -29,7 +68,7 @@ export async function getStaticPaths({ paginate }) {
   return paginate(allPosts, { pageSize: 12 });
 }
 
-const { page } = Astro.props;
+const { page } = Astro.props as { page: PaginationProps };
 
 // Content for the page header
 const header = {
