@@ -24,29 +24,44 @@ const sortedPosts = data.sort((a: any, b: any) => {
 ---
 
 <Section>
-	<Row>
-		<Col span="12">
-			<TagNavigation />
-		</Col>
+	<div class="blog-posts-container">
+		<TagNavigation />
 		
 		{isLoading ? (
-			<Col span="12" align="center">
-				<div class="loading-spinner">Loading posts...</div>
-			</Col>
+			<div class="loading-spinner">Loading posts...</div>
 		) : (
-			sortedPosts.map((post: any) => (
-				<Col span="4">
-					<Post
-						link={`/blog/${post.id}`}
-						title={post.data.title}
-						subtitle={`By ${post.data.author} on ${new Date(post.data.pubDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`}
-						image={post.data.image}
-						tags={post.data.tags}
-					>
-						{post.data.description}
-					</Post>
-				</Col>
-			))
+			<div class="blog-posts-grid">
+				{sortedPosts.map((post: any) => (
+					<div class="blog-post-item">
+						<Post
+							link={`/blog/${post.id}`}
+							title={post.data.title}
+							subtitle={`By ${post.data.author} on ${new Date(post.data.pubDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`}
+							image={post.data.image}
+							tags={post.data.tags}
+							mobileSimplified={true}
+						>
+							{post.data.description}
+						</Post>
+					</div>
+				))}
+			</div>
 		)}
-	</Row>
+	</div>
 </Section>
+
+<style>
+	.blog-posts-container {
+		@apply w-full;
+	}
+	
+	.blog-posts-grid {
+		@apply grid grid-cols-3 gap-6;
+	}
+	
+	@media (max-width: 768px) {
+		.blog-posts-grid {
+			@apply grid grid-cols-2 gap-[5px];
+		}
+	}
+</style>
