@@ -1,0 +1,557 @@
+---
+// Components
+// - Layout
+import Layout from '../layouts/Layout.astro'
+// - UI
+import Section from '../components/ui/Section.astro'
+import Row from '../components/ui/Row.astro'
+import Col from '../components/ui/Col.astro'
+import SidebarContent from '../components/blocks/basic/StickySidebar.astro'
+import Hero from '../components/blocks/hero/PageHeader.astro'
+import Button from '../components/ui/Button.astro'
+
+// Content
+// - SEO
+const SEO = {
+	title: 'Spike Protein Detox Guide | World Council for Health',
+	description:
+		'A practical guide to addressing spike protein-induced inflammation, autoimmunity, and damage from COVID-19 and post-vaccine illness.'
+}
+// - Page Header
+const header = {
+	title: 'Spike Protein <strong>Detox Guide</strong>',
+	text: 'A practical guide to addressing spike protein-induced inflammation, autoimmunity, and damage from COVID-19 and post-vaccine illness.'
+}
+---
+
+<Layout title={SEO.title} description={SEO.description}>
+	<Hero title={header.title} text={header.text} />
+	
+	<Section classes="bg-white dark:bg-neutral-950">
+		<Row>
+			<Col span="12" align="center">
+				<div class="max-w-3xl mx-auto mb-8">
+					<p class="text-lg text-neutral-700 dark:text-neutral-300 mb-6">
+						The World Council for Health recognizes that spike proteins can cause damage and illness for some people, potentially leading to serious health issues. This guide aims to provide a comprehensive approach to spike protein detoxification.
+					</p>
+					<p class="text-lg text-neutral-700 dark:text-neutral-300 mb-6">
+						This is an evolving document that will be updated as new information and evidence emerge. We encourage you to discuss these recommendations with your healthcare provider.
+					</p>
+					<div class="flex justify-center mt-8">
+						<Button type="link" link="#" size="lg">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+							</svg>
+							Download PDF Guide
+						</Button>
+					</div>
+				</div>
+			</Col>
+		</Row>
+	</Section>
+
+	<SidebarContent classes="bg-neutral-50 dark:bg-neutral-900">
+		<div slot="sidebar">
+			<h3 class="text-xl font-bold mb-4">Contents</h3>
+			<ul class="space-y-2">
+				<li><a href="#about" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">About Spike Proteins</a></li>
+				<li><a href="#why-detox" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">Why Consider a Detox</a></li>
+				<li><a href="#symptoms" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">Symptoms</a></li>
+				<li><a href="#approach" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">Approach to Treatment</a></li>
+				<li><a href="#ace2" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">ACE2 Receptors</a></li>
+				<li><a href="#substances" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">Helpful Substances</a></li>
+				<li><a href="#nutrition" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">Nutrition & Diet</a></li>
+				<li><a href="#lifestyle" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">Lifestyle Strategies</a></li>
+				<li><a href="#references" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">References</a></li>
+			</ul>
+		</div>
+		
+		<div class="basic-text">
+			<h2 id="about" class="text-2xl font-bold mb-4">About Spike Proteins</h2>
+			<p class="mb-4">
+				Spike proteins are a key component of the SARS-CoV-2 virus, which causes COVID-19. They're also produced in the body after vaccination with current COVID-19 vaccines. These proteins can potentially cause damage by:
+			</p>
+			<ul class="list-disc pl-6 mb-6 space-y-2">
+				<li>Binding to ACE2 receptors, disrupting their normal function</li>
+				<li>Causing cell signaling through the CD147 receptor</li>
+				<li>Damaging mitochondria, the energy centers of our cells</li>
+				<li>Damaging cell DNA repair mechanisms</li>
+				<li>Triggering inflammation and oxidative stress</li>
+				<li>Potentially crossing the blood-brain barrier</li>
+				<li>Circulating in exosomes, potentially affecting distant tissues</li>
+			</ul>
+			
+			<h3 id="why-detox" class="text-xl font-semibold mb-3">Why Consider a Spike Protein Detox?</h3>
+			<p class="mb-4">
+				The spike protein from a natural infection or a Covid vaccine can cause damage to our body's cells, making it important to take action to detoxify from it as best as possible.
+			</p>
+			<p class="mb-4">
+				Research has linked the spike protein to various toxic effects, including blood clots, brain fog, organizing pneumonia, and myocarditis. These effects may be responsible for many of the symptoms experienced after COVID-19 infection or vaccination.
+			</p>
+			<p class="mb-4">
+				A Japanese biodistribution study for the Pfizer vaccine found that, in the 48 hours post-vaccination, vaccine particles traveled to various tissues throughout the body and did not stay at the injection site, with high concentrations found in the liver, bone marrow, and ovaries.
+			</p>
+			<p class="mb-4">
+				Emerging evidence on "spikopathy" suggests that effects related to inflammation and clotting may occur in any tissue where the spike protein accumulates. Peer-reviewed studies in mice have found that the spike protein is capable of crossing the blood-brain barrier, potentially leading to neurological damage if not cleared from the body.
+			</p>
+			
+			<h3 class="text-xl font-semibold mb-3">Who Might Benefit from This Guide?</h3>
+			<p class="mb-4">
+				This spike protein detox guide may be helpful for:
+			</p>
+			<ul class="list-disc pl-6 mb-6 space-y-2">
+				<li>Individuals who have had COVID-19</li>
+				<li>Those who have received a COVID-19 vaccine</li>
+				<li>People experiencing symptoms that may be related to spike protein exposure</li>
+				<li>Anyone interested in preventative health measures</li>
+			</ul>
+			<div class="bg-yellow-50 dark:bg-yellow-900/30 p-4 rounded-lg mb-6">
+				<p class="text-sm font-medium">
+					<strong>Important Safety Note:</strong> Do not undertake a detox without supervision from a qualified health practitioner if you are pregnant, nursing, or have a serious medical condition. Some substances mentioned in this guide should not be consumed during pregnancy or may interact with medications.
+				</p>
+			</div>
+			
+			<h2 id="symptoms" class="text-2xl font-bold mb-4">Common Symptoms of Spike Protein Damage</h2>
+			<div class="grid md:grid-cols-2 gap-6 mb-8">
+				<div class="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
+					<h3 class="text-xl font-semibold mb-3">Physical Symptoms</h3>
+					<ul class="list-disc pl-6 space-y-1">
+						<li>Fatigue & exhaustion</li>
+						<li>Brain fog & cognitive issues</li>
+						<li>Headaches</li>
+						<li>Tinnitus (ringing in ears)</li>
+						<li>Shortness of breath</li>
+						<li>Reduced stamina</li>
+						<li>Joint & muscle pain</li>
+						<li>Chest pain</li>
+						<li>Numbness & tingling sensations</li>
+						<li>Heart palpitations</li>
+						<li>Dizziness</li>
+						<li>Menstrual irregularities</li>
+					</ul>
+				</div>
+				<div class="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
+					<h3 class="text-xl font-semibold mb-3">Systemic Issues</h3>
+					<ul class="list-disc pl-6 space-y-1">
+						<li>Cardiovascular problems</li>
+						<li>Neurological issues</li>
+						<li>Immune system dysregulation</li>
+						<li>Respiratory difficulties</li>
+						<li>Reproductive health concerns</li>
+						<li>Digestive problems</li>
+						<li>Sleep disturbances</li>
+						<li>Skin reactions</li>
+						<li>Autoimmune-like symptoms</li>
+						<li>Reactivation of latent viruses</li>
+					</ul>
+				</div>
+			</div>
+			
+			<h2 id="approach" class="text-2xl font-bold mb-4">Approach to Treatment</h2>
+			<p class="mb-4">
+				The spike protein detox focuses on several key mechanisms:
+			</p>
+			<div class="grid md:grid-cols-3 gap-4 mb-8">
+				<div class="bg-primary-50 dark:bg-primary-900/30 p-4 rounded-lg">
+					<h3 class="text-lg font-semibold mb-2 text-primary-700 dark:text-primary-300">Inhibit ACE2 Binding</h3>
+					<p class="text-sm">Preventing spike proteins from attaching to cells</p>
+				</div>
+				<div class="bg-primary-50 dark:bg-primary-900/30 p-4 rounded-lg">
+					<h3 class="text-lg font-semibold mb-2 text-primary-700 dark:text-primary-300">Anti-Inflammatory</h3>
+					<p class="text-sm">Reducing inflammation throughout the body</p>
+				</div>
+				<div class="bg-primary-50 dark:bg-primary-900/30 p-4 rounded-lg">
+					<h3 class="text-lg font-semibold mb-2 text-primary-700 dark:text-primary-300">Antioxidant Support</h3>
+					<p class="text-sm">Neutralizing harmful free radicals</p>
+				</div>
+				<div class="bg-primary-50 dark:bg-primary-900/30 p-4 rounded-lg">
+					<h3 class="text-lg font-semibold mb-2 text-primary-700 dark:text-primary-300">Detoxification</h3>
+					<p class="text-sm">Supporting the body's natural cleansing processes</p>
+				</div>
+				<div class="bg-primary-50 dark:bg-primary-900/30 p-4 rounded-lg">
+					<h3 class="text-lg font-semibold mb-2 text-primary-700 dark:text-primary-300">Immune Support</h3>
+					<p class="text-sm">Strengthening immune function</p>
+				</div>
+				<div class="bg-primary-50 dark:bg-primary-900/30 p-4 rounded-lg">
+					<h3 class="text-lg font-semibold mb-2 text-primary-700 dark:text-primary-300">Circulation Support</h3>
+					<p class="text-sm">Improving blood flow and reducing clotting risk</p>
+				</div>
+			</div>
+			
+			<h2 id="ace2" class="text-2xl font-bold mb-4">Understanding ACE2 Receptors</h2>
+			<p class="mb-4">
+				ACE2 (Angiotensin-Converting Enzyme 2) receptors are located in cell walls, particularly in lung and blood vessel linings, and in platelets. The spike protein has a high affinity for these receptors and attaches to them.
+			</p>
+			<p class="mb-4">
+				When large concentrations of spike protein bind to ACE2 receptors, they can:
+			</p>
+			<ul class="list-disc pl-6 mb-6 space-y-2">
+				<li>Block the regular functioning of these receptors in various tissues</li>
+				<li>Trigger the immune system to attack healthy cells, potentially leading to autoimmune issues</li>
+				<li>Attach to ACE2 receptors on blood platelets and endothelial cells lining blood vessels, which may lead to abnormal bleeding or clotting</li>
+			</ul>
+			
+			<h3 class="text-xl font-semibold mb-3">How to Detox Your ACE2 Receptors</h3>
+			<div class="grid md:grid-cols-2 gap-6 mb-8">
+				<div class="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
+					<p class="mb-4">
+						Several substances may help prevent spike proteins from binding to ACE2 receptors or help clear them:
+					</p>
+					<ul class="list-disc pl-6 space-y-1">
+						<li>Ivermectin - Evidence suggests it may bind to the ACE2 receptor, preventing spike protein attachment</li>
+						<li>Hydroxychloroquine (with zinc) - May interfere with spike protein binding</li>
+						<li>Quercetin (with zinc) - Natural alternative with similar mechanisms</li>
+						<li>Fisetin - A flavonoid with potential protective effects</li>
+					</ul>
+				</div>
+				<div class="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
+					<h4 class="font-semibold mb-2">Spike Protein Inhibitors:</h4>
+					<ul class="list-disc pl-6 space-y-1 mb-4">
+						<li>Prunella vulgaris (self-heal)</li>
+						<li>Pine needles</li>
+						<li>Emodin</li>
+						<li>Neem</li>
+						<li>Dandelion leaf extract</li>
+						<li>Ivermectin</li>
+					</ul>
+					
+					<h4 class="font-semibold mb-2">Spike Protein Neutralizers:</h4>
+					<ul class="list-disc pl-6 space-y-1">
+						<li>N-acetylcysteine (NAC)</li>
+						<li>Glutathione</li>
+						<li>Fennel tea</li>
+						<li>Star anise tea</li>
+						<li>Pine needle tea</li>
+						<li>St. John's wort</li>
+						<li>Comfrey leaf</li>
+						<li>Vitamin C</li>
+					</ul>
+				</div>
+			</div>
+			
+			<h2 id="substances" class="text-2xl font-bold mb-4">Helpful Substances for Spike Protein Detoxification</h2>
+			
+			<div class="mb-8">
+				<div class="overflow-x-auto">
+					<table class="min-w-full bg-white dark:bg-neutral-800 rounded-lg overflow-hidden">
+						<thead class="bg-neutral-100 dark:bg-neutral-700">
+							<tr>
+								<th class="px-4 py-3 text-left text-sm font-semibold">Substance</th>
+								<th class="px-4 py-3 text-left text-sm font-semibold">Benefits</th>
+								<th class="px-4 py-3 text-left text-sm font-semibold">Dosage Notes</th>
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-neutral-200 dark:divide-neutral-700">
+							<tr>
+								<td class="px-4 py-3 font-medium">Vitamin D3</td>
+								<td class="px-4 py-3">Modulates immune function, reduces inflammation</td>
+								<td class="px-4 py-3">5,000-10,000 IU daily (with K2)</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Vitamin C</td>
+								<td class="px-4 py-3">Powerful antioxidant, supports immune function, neutralizes toxins</td>
+								<td class="px-4 py-3">6-12g daily (divided between sodium ascorbate, liposomal vitamin C, and ascorbyl palmitate)</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Zinc</td>
+								<td class="px-4 py-3">Antiviral, supports immune system</td>
+								<td class="px-4 py-3">11-40mg daily</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Quercetin</td>
+								<td class="px-4 py-3">Zinc ionophore, anti-inflammatory, inhibits ACE2 binding</td>
+								<td class="px-4 py-3">Up to 500mg twice daily (consume with zinc)</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">NAC (N-Acetyl Cysteine)</td>
+								<td class="px-4 py-3">Precursor to glutathione, mucolytic, antioxidant</td>
+								<td class="px-4 py-3">Up to 1200mg daily (in divided doses)</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Ivermectin</td>
+								<td class="px-4 py-3">Binds spike protein, anti-inflammatory, inhibits ACE2 binding</td>
+								<td class="px-4 py-3">0.4mg/kg weekly for 4 weeks (prescription required)</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Hydroxychloroquine</td>
+								<td class="px-4 py-3">May interfere with spike protein binding to ACE2</td>
+								<td class="px-4 py-3">200mg weekly for 4 weeks (prescription required)</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Nattokinase</td>
+								<td class="px-4 py-3">Dissolves clots, reduces inflammation</td>
+								<td class="px-4 py-3">As directed on supplement</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Dandelion Leaf Extract</td>
+								<td class="px-4 py-3">Blocks spike protein binding to ACE2</td>
+								<td class="px-4 py-3">Tincture as per preparation instructions</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Pine Needle Tea</td>
+								<td class="px-4 py-3">Contains suramin, may inhibit blood coagulation, high in vitamin C</td>
+								<td class="px-4 py-3">Consume 3x daily (include oil/resin that accumulates)</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Fennel Tea</td>
+								<td class="px-4 py-3">Contains shikimic acid, may neutralize spike protein</td>
+								<td class="px-4 py-3">No upper limit. Start with 1 cup and monitor reaction</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Star Anise Tea</td>
+								<td class="px-4 py-3">Contains shikimic acid, may neutralize spike protein</td>
+								<td class="px-4 py-3">No upper limit. Start with 1 cup and monitor reaction</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">St. John's Wort</td>
+								<td class="px-4 py-3">Contains shikimic acid, may neutralize spike protein</td>
+								<td class="px-4 py-3">As directed on supplement</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Comfrey Leaf</td>
+								<td class="px-4 py-3">Contains shikimic acid, may neutralize spike protein</td>
+								<td class="px-4 py-3">As directed on supplement</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Prunella Vulgaris (Self-heal)</td>
+								<td class="px-4 py-3">May inhibit spike protein binding</td>
+								<td class="px-4 py-3">7 ounces (207ml) daily</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Neem</td>
+								<td class="px-4 py-3">May inhibit spike protein binding</td>
+								<td class="px-4 py-3">As per practitioner's instructions</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Boswellia serrata</td>
+								<td class="px-4 py-3">Anti-inflammatory</td>
+								<td class="px-4 py-3">As directed on supplement</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Black Cumin (Nigella Sativa)</td>
+								<td class="px-4 py-3">Anti-inflammatory, immune support</td>
+								<td class="px-4 py-3">As directed on supplement</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Curcumin</td>
+								<td class="px-4 py-3">Anti-inflammatory, antioxidant</td>
+								<td class="px-4 py-3">As directed on supplement</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Fish Oil</td>
+								<td class="px-4 py-3">Anti-inflammatory, supports cardiovascular health</td>
+								<td class="px-4 py-3">Up to 2000mg daily</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Fisetin</td>
+								<td class="px-4 py-3">Flavonoid with potential ACE2 protective effects</td>
+								<td class="px-4 py-3">Up to 100mg daily (consume with fats)</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Apigenin</td>
+								<td class="px-4 py-3">Anti-inflammatory, antioxidant</td>
+								<td class="px-4 py-3">50mg daily</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Resveratrol</td>
+								<td class="px-4 py-3">Antioxidant, supports cardiovascular health</td>
+								<td class="px-4 py-3">Up to 1500mg daily for up to 3 months</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Luteolin</td>
+								<td class="px-4 py-3">Anti-inflammatory, antioxidant</td>
+								<td class="px-4 py-3">100-300mg daily</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Vitamin K</td>
+								<td class="px-4 py-3">Supports proper blood clotting, works with vitamin D</td>
+								<td class="px-4 py-3">90-120mcg daily (90 for women, 120 for men)</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Magnesium</td>
+								<td class="px-4 py-3">Supports muscle and nerve function, energy production</td>
+								<td class="px-4 py-3">Up to 350mg daily</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Jasmine Tea</td>
+								<td class="px-4 py-3">Antioxidant properties</td>
+								<td class="px-4 py-3">Up to 8 cups per day</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Milk Thistle Extract</td>
+								<td class="px-4 py-3">Supports liver detoxification</td>
+								<td class="px-4 py-3">200mg x 3 daily</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Andrographis Paniculata</td>
+								<td class="px-4 py-3">Anti-inflammatory, immune support</td>
+								<td class="px-4 py-3">400mg x 2 daily (check for contraindications)</td>
+							</tr>
+							<tr>
+								<td class="px-4 py-3 font-medium">Blue Green Algae</td>
+								<td class="px-4 py-3">Detoxification support, nutrient-dense</td>
+								<td class="px-4 py-3">1-10 grams daily</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<p class="text-sm italic mt-3">Note: Always consult with a healthcare provider before starting any new supplement regimen. This list is not comprehensive, and other substances such as serrapeptase and CBD oil have also been suggested.</p>
+				<p class="text-sm mt-2">Most of these items are easily accessible in local grocery stores or as nutritional supplements in health food stores.</p>
+			</div>
+			
+			<h2 id="nutrition" class="text-2xl font-bold mb-4">Nutrition & Diet Recommendations</h2>
+			<p class="mb-4">
+				A nutrient-dense, anti-inflammatory diet is crucial for supporting detoxification and healing:
+			</p>
+			<div class="grid md:grid-cols-2 gap-6 mb-8">
+				<div>
+					<h3 class="text-xl font-semibold mb-3">Foods to Emphasize</h3>
+					<ul class="list-disc pl-6 space-y-1">
+						<li>Organic fruits and vegetables (especially leafy greens)</li>
+						<li>Cruciferous vegetables (broccoli, cauliflower, cabbage)</li>
+						<li>Berries (rich in antioxidants)</li>
+						<li>Wild-caught fish (for omega-3s)</li>
+						<li>Nuts and seeds (especially flax and chia)</li>
+						<li>Herbs and spices (turmeric, ginger, garlic)</li>
+						<li>Green tea</li>
+						<li>Clean, filtered water</li>
+					</ul>
+				</div>
+				<div>
+					<h3 class="text-xl font-semibold mb-3">Foods to Minimize</h3>
+					<ul class="list-disc pl-6 space-y-1">
+						<li>Processed foods and refined carbohydrates</li>
+						<li>Industrial seed oils (canola, corn, soybean)</li>
+						<li>Added sugars</li>
+						<li>Alcohol</li>
+						<li>Excessive caffeine</li>
+						<li>Artificial additives and preservatives</li>
+						<li>Factory-farmed animal products</li>
+						<li>Gluten and dairy (if sensitive)</li>
+					</ul>
+				</div>
+			</div>
+			
+			<h2 id="lifestyle" class="text-2xl font-bold mb-4">Lifestyle Strategies</h2>
+			<div class="grid md:grid-cols-3 gap-6 mb-8">
+				<div class="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
+					<h3 class="text-xl font-semibold mb-3">Movement & Exercise</h3>
+					<ul class="list-disc pl-6 space-y-1">
+						<li>Gentle, regular movement</li>
+						<li>Walking in nature</li>
+						<li>Yoga and stretching</li>
+						<li>Tai chi or qigong</li>
+						<li>Gradual return to exercise</li>
+						<li>Avoid overexertion</li>
+					</ul>
+				</div>
+				<div class="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
+					<h3 class="text-xl font-semibold mb-3">Stress Reduction</h3>
+					<ul class="list-disc pl-6 space-y-1">
+						<li>Meditation and mindfulness</li>
+						<li>Deep breathing exercises</li>
+						<li>Time in nature</li>
+						<li>Adequate rest</li>
+						<li>Social connection</li>
+						<li>Limiting news consumption</li>
+						<li>Creative expression</li>
+					</ul>
+				</div>
+				<div class="bg-white dark:bg-neutral-800 p-6 rounded-lg shadow-sm">
+					<h3 class="text-xl font-semibold mb-3">Detoxification Support</h3>
+					<ul class="list-disc pl-6 space-y-1">
+						<li>Sauna therapy (if tolerated)</li>
+						<li>Epsom salt baths</li>
+						<li>Dry brushing</li>
+						<li>Adequate hydration</li>
+						<li>Intermittent fasting (if appropriate)</li>
+						<li>Quality sleep</li>
+						<li>Reducing environmental toxins</li>
+					</ul>
+				</div>
+			</div>
+			
+			<h2 id="references" class="text-2xl font-bold mb-4">References & Further Reading</h2>
+			<div class="bg-neutral-100 dark:bg-neutral-800 p-6 rounded-lg mb-8">
+				<ol class="list-decimal pl-6 space-y-2">
+					<li>Patterson, B.K., et al. (2021). Persistence of SARS CoV-2 S1 Protein in CD16+ Monocytes in Post-Acute Sequelae of COVID-19 (PASC) Up to 15 Months Post-Infection.</li>
+					<li>Seneff, S., & Nigh, G. (2021). Worse Than the Disease? Reviewing Some Possible Unintended Consequences of the mRNA Vaccines Against COVID-19.</li>
+					<li>Idrees, D., & Kumar, V. (2021). SARS-CoV-2 spike protein interactions with amyloidogenic proteins: Potential clues to neurodegeneration.</li>
+					<li>Rhea, E.M., et al. (2021). The S1 protein of SARS-CoV-2 crosses the blood–brain barrier in mice. <a href="https://www.nature.com/articles/s41593-020-00771-8" target="_blank" class="text-primary-600 hover:underline">Nature Neuroscience</a></li>
+					<li>Lei, Y., et al. (2021). SARS-CoV-2 Spike Protein Impairs Endothelial Function via Downregulation of ACE2.</li>
+					<li>Avolio, E., et al. (2021). The SARS-CoV-2 Spike protein disrupts human cardiac pericytes function through CD147 receptor-mediated signalling.</li>
+					<li>Jiang, H., & Mei, Y.F. (2021). SARS-CoV-2 Spike Impairs DNA Damage Repair and Inhibits V(D)J Recombination In Vitro.</li>
+					<li>Theoharides, T.C., & Conti, P. (2021). Be aware of SARS-CoV-2 spike protein: There is more than meets the eye.</li>
+					<li>Japanese biodistribution study for the Pfizer vaccine. <a href="https://rightsfreedoms.wordpress.com/2021/06/03/confidential-pfizer-research-document/" target="_blank" class="text-primary-600 hover:underline">Available here</a></li>
+					<li>Leake, J. (2021). Ivermectin has been shown to bind to the spike protein, potentially rendering it ineffective in binding to the cell membrane. <a href="https://pubmed.ncbi.nlm.nih.gov/32871846/" target="_blank" class="text-primary-600 hover:underline">PubMed</a></li>
+					<li>Yan, R., et al. (2021). Structural basis for the recognition of SARS-CoV-2 by full-length human ACE2. <a href="https://pubmed.ncbi.nlm.nih.gov/33275540/" target="_blank" class="text-primary-600 hover:underline">PubMed</a></li>
+					<li>Vaccine-induced Thrombotic Thrombocytopenia (VITT) and COVID-19 Vaccines. <a href="https://www.acc.org/latest-in-cardiology/articles/2021/04/01/01/42/vaccine-induced-thrombotic-thrombocytopenia-vitt-and-covid-19-vaccines" target="_blank" class="text-primary-600 hover:underline">American College of Cardiology</a></li>
+					<li>Shikimic acid as a potential compound for inhibiting SARS-CoV-2 infection. <a href="https://pubs.rsc.org/en/content/articlelanding/2016/fo/c6fo00927a" target="_blank" class="text-primary-600 hover:underline">RSC Publications</a></li>
+				</ol>
+				<p class="mt-4 italic">This is not an exhaustive list. For the most current research, please consult recent scientific literature. The World Council for Health will continue to update this spike protein detox document as new information emerges.</p>
+			</div>
+			
+			<div class="bg-primary-50 dark:bg-primary-900/30 p-6 rounded-lg mb-8">
+				<h3 class="text-xl font-semibold mb-3">Disclaimer</h3>
+				<p class="mb-2">
+					This guide is for informational purposes only and does not constitute medical advice. The World Council for Health is an educational and informational organization that does not provide medical diagnosis, treatment, or advice.
+				</p>
+				<p>
+					Always consult with a qualified healthcare provider regarding any medical condition or before starting any new health regimen. Individual responses to the suggestions in this guide may vary.
+				</p>
+			</div>
+		</div>
+	</SidebarContent>
+	
+	<Section classes="bg-white dark:bg-neutral-950">
+		<Row>
+			<Col span="12" align="center">
+				<div class="max-w-3xl mx-auto">
+					<h2 class="text-2xl font-bold mb-4">Share This Resource</h2>
+					<p class="mb-6">Help others access this important information by sharing this guide with friends and family.</p>
+					<div class="flex flex-wrap justify-center gap-4">
+						<Button type="link" link="#" variation="outline">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+							</svg>
+							Share on Twitter
+						</Button>
+						<Button type="link" link="#" variation="outline">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
+							</svg>
+							Share on Facebook
+						</Button>
+						<Button type="link" link="#" variation="outline">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+							</svg>
+							Share on Telegram
+						</Button>
+						<Button type="link" link="#" variation="outline">
+							<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+							</svg>
+							Email to a Friend
+						</Button>
+					</div>
+				</div>
+			</Col>
+		</Row>
+	</Section>
+</Layout>
+
+<style>
+	.basic-text h2 {
+		@apply mt-10 mb-4 text-2xl font-bold;
+	}
+	.basic-text h3 {
+		@apply mt-6 mb-3 text-xl font-semibold;
+	}
+	.basic-text p {
+		@apply mb-4 leading-relaxed;
+	}
+	.basic-text ul, .basic-text ol {
+		@apply mb-6;
+	}
+</style> 
