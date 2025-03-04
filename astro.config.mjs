@@ -9,7 +9,17 @@ import vercel from "@astrojs/vercel";
 export default defineConfig({
   site: "https://foxi.netlify.app/",
   output: process.env.NODE_ENV === "production" ? "server" : "static",
-  adapter: process.env.NODE_ENV === "production" ? vercel() : undefined,
+  adapter: process.env.NODE_ENV === "production" ? vercel({
+    analytics: true,
+    // Increase build timeout for network requests
+    buildOptions: {
+      timeout: 60 * 1000 * 5, // 5 minutes
+    },
+    // Increase serverless function timeout
+    functionOptions: {
+      timeout: 30, // 30 seconds
+    }
+  }) : undefined,
   integrations: [
     tailwind(),
     icon(),
@@ -22,6 +32,18 @@ export default defineConfig({
   ],
   vite: {
     // ... existing vite config
+    build: {
+      // Increase build timeout
+      timeout: 60000 * 5, // 5 minutes
+    },
+    // Add retry logic for network requests
+    optimizeDeps: {
+      esbuildOptions: {
+        define: {
+          global: 'globalThis',
+        },
+      },
+    },
   },
   head: [
     {

@@ -10,6 +10,8 @@ export default class WordPressGraphQLClient {
     this.endpoint = endpoint;
     // Use in-memory cache by default, Redis optionally
     this.cache = useRedis ? new RedisCache() : new WordPressCache();
+    this.maxRetries = 3;
+    this.timeout = 10000; // 10 seconds timeout
   }
 
   async query(query, variables = {}, useCache = true) {
@@ -24,34 +26,69 @@ export default class WordPressGraphQLClient {
       }
     }
     
-    try {
-      const response = await fetch(this.endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query,
-          variables,
-        }),
-      });
+    let retries = 0;
+    let lastError;
 
-      const result = await response.json();
+    while (retries < this.maxRetries) {
+      try {
+        // Create AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-      if (result.errors) {
-        throw new Error(result.errors[0].message);
+        const response = await fetch(this.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query,
+            variables,
+          }),
+          signal: controller.signal,
+        });
+
+        // Clear the timeout
+        clearTimeout(timeoutId);
+
+        // Check if the response is ok
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.errors) {
+          throw new Error(result.errors[0].message);
+        }
+        
+        // Store in cache if caching is enabled
+        if (useCache) {
+          this.cache.set(cacheKey, result.data);
+        }
+
+        return result.data;
+      } catch (error) {
+        lastError = error;
+        console.error(`GraphQL query error (attempt ${retries + 1}/${this.maxRetries}):`, error);
+        
+        // If it's a timeout or network error, retry
+        if (error.name === 'AbortError' || 
+            error.code === 'ECONNRESET' || 
+            error.message.includes('fetch failed')) {
+          retries++;
+          // Exponential backoff
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
+          continue;
+        }
+        
+        // For other errors, don't retry
+        throw error;
       }
-      
-      // Store in cache if caching is enabled
-      if (useCache) {
-        this.cache.set(cacheKey, result.data);
-      }
-
-      return result.data;
-    } catch (error) {
-      console.error('GraphQL query error:', error);
-      throw error;
     }
+
+    // If we've exhausted all retries
+    console.error('GraphQL query failed after maximum retries');
+    throw lastError;
   }
 
   async getAllPosts(count = 12, after = null) {
