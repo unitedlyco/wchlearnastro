@@ -10,8 +10,8 @@ import Layout from '../../layouts/Layout.astro'
 import Hero from '../../components/blocks/hero/PageHeader.astro'
 import BlogPosts from '../../components/blocks/blog/BlogPosts.astro'
 
-// Data
-import { getCollection } from 'astro:content'
+// WordPress GraphQL Client
+import WordPressGraphQLClient from '../../lib/wordpress.js'
 
 // Content
 // - SEO
@@ -26,10 +26,34 @@ const header = {
 	text: 'Stay informed and stay healthy with WCH Learn.'
 }
 
-const allPosts = await getCollection('blog')
+// Fetch posts from WordPress
+const client = new WordPressGraphQLClient();
+const response = await client.getAllPosts(12);
+const allPosts = response.posts.nodes.map(post => ({
+  id: post.slug,
+  data: {
+    title: post.title,
+    description: post.excerpt.replace(/<\/?[^>]+(>|$)/g, ""), // Strip HTML
+    pubDate: new Date(post.date),
+    image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
+    author: post.author?.node?.name || 'WCH Team',
+    tags: post.categories?.nodes?.map(cat => cat.name) || []
+  }
+}));
+
+export const getStaticPaths = async ({ paginate }) => {
+  return {
+    // Your paths here
+    revalidate: 3600 // Revalidate every hour
+  };
+};
+
+export const prerender = false;
 ---
 
 <Layout title={SEO.title} description={SEO.description}>
 	<Hero title={header.title} text={header.text} />
 	<BlogPosts data={allPosts} />
 </Layout>
+
+<meta http-equiv="refresh" content="0;url=/blog/1" />

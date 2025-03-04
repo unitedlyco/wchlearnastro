@@ -10,35 +10,52 @@ import Layout from '../../../layouts/Layout.astro'
 import Hero from '../../../components/blocks/hero/PageHeader.astro'
 import BlogPosts from '../../../components/blocks/blog/BlogPosts.astro'
 
-// Data
-import { getCollection } from 'astro:content'
-export async function getStaticPaths() {
-	const allPosts = await getCollection('blog')
-	const uniqueTags = [...new Set(allPosts.map((post) => post.data.tags).flat())]
+// WordPress GraphQL Client
+import WordPressGraphQLClient from '../../../lib/wordpress.js'
 
-	return uniqueTags.map((tag) => {
-		const filteredPosts = allPosts.filter((post) => post.data.tags.includes(tag))
+// Get all categories for static paths
+export async function getStaticPaths() {
+	const client = new WordPressGraphQLClient();
+	const response = await client.getAllCategories();
+	const categories = response.categories.nodes;
+
+	return categories.map((category) => {
 		return {
-			params: { tag },
-			props: { posts: filteredPosts }
+			params: { tag: category.slug },
+			props: { category }
 		}
 	})
 }
+
 const { tag } = Astro.params
-const { posts } = Astro.props
+const { category } = Astro.props
+
+// Fetch posts for this category
+const client = new WordPressGraphQLClient();
+const response = await client.getCategoryPosts(tag, 12);
+const posts = response.category.posts.nodes.map(post => ({
+  id: post.slug,
+  data: {
+    title: post.title,
+    description: post.excerpt.replace(/<\/?[^>]+(>|$)/g, ""), // Strip HTML
+    pubDate: new Date(post.date),
+    image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
+    author: post.author?.node?.name || 'WCH Team',
+    tags: [category.name]
+  }
+}));
 
 // Content
 // - SEO
 const SEO = {
-	title: `Foxi | posts tagges as ` + tag,
-	description:
-		"Explore Foxi's latest news designed to enhance productivity, ensure top-notch security, and integrate seamlessly with your favorite tools. Join thousands of satisfied users and transform your workflow with Foxi today!"
+	title: `WCH Learn | Posts about ${category.name}`,
+	description: category.description || `Explore WCH Learn's resources about ${category.name}`
 }
 
 // - Page Header
 const header = {
-	title: `Foxi posts about <br><strong>` + tag + `</strong>`,
-	text: `Stay informed, stay productive with all the latest fromFoxi.`
+	title: `WCH Learn posts about <br><strong>${category.name}</strong>`,
+	text: `Stay informed, stay healthy with all the latest from WCH Learn.`
 }
 ---
 

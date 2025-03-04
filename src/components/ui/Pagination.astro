@@ -1,0 +1,76 @@
+---
+// Pagination Component
+// ------------
+// Description: A component for paginating through content
+// Properties:
+// - currentPage: The current page number
+// - totalPages: The total number of pages
+// - prevUrl: URL for the previous page
+// - nextUrl: URL for the next page
+
+// Props
+type Props = {
+  currentPage: number;
+  totalPages: number;
+  prevUrl: string | undefined;
+  nextUrl: string | undefined;
+};
+
+const { currentPage, totalPages, prevUrl, nextUrl } = Astro.props;
+---
+
+<nav aria-label="Pagination" class="pagination">
+  <div class="pagination__container">
+    <div class="pagination__info">
+      Page {currentPage} of {totalPages}
+    </div>
+    
+    <div class="pagination__controls">
+      {prevUrl ? (
+        <a href={prevUrl} class="pagination__button pagination__button--prev">
+          Previous
+        </a>
+      ) : (
+        <span class="pagination__button pagination__button--prev pagination__button--disabled">
+          Previous
+        </span>
+      )}
+      
+      {nextUrl ? (
+        <a href={nextUrl} class="pagination__button pagination__button--next">
+          Next
+        </a>
+      ) : (
+        <span class="pagination__button pagination__button--next pagination__button--disabled">
+          Next
+        </span>
+      )}
+    </div>
+  </div>
+</nav>
+
+<style>
+  .pagination {
+    @apply py-8;
+  }
+  
+  .pagination__container {
+    @apply flex flex-col sm:flex-row items-center justify-between max-w-6xl mx-auto px-6;
+  }
+  
+  .pagination__info {
+    @apply text-neutral-500 mb-4 sm:mb-0;
+  }
+  
+  .pagination__controls {
+    @apply flex gap-4;
+  }
+  
+  .pagination__button {
+    @apply px-4 py-2 rounded-md bg-primary-500 text-white transition-colors hover:bg-primary-600;
+  }
+  
+  .pagination__button--disabled {
+    @apply bg-neutral-300 text-neutral-500 cursor-not-allowed hover:bg-neutral-300;
+  }
+</style> 

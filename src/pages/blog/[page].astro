@@ -1,0 +1,57 @@
+---
+// Blog Index Page with pagination
+import Layout from '../../layouts/Layout.astro';
+import Hero from '../../components/blocks/hero/PageHeader.astro';
+import BlogPosts from '../../components/blocks/blog/BlogPosts.astro';
+import Pagination from '../../components/ui/Pagination.astro';
+
+// Import the WordPress client
+import WordPressGraphQLClient from '../../lib/wordpress.js';
+
+export async function getStaticPaths({ paginate }) {
+  const client = new WordPressGraphQLClient();
+  const response = await client.getAllPosts(100); // Get all posts for pagination
+  
+  // Map WordPress posts to the format your components expect
+  const allPosts = response.posts.nodes.map(post => ({
+    id: post.slug,
+    data: {
+      title: post.title,
+      description: post.excerpt.replace(/<\/?[^>]+(>|$)/g, ""), // Strip HTML
+      pubDate: new Date(post.date),
+      image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
+      author: post.author?.node?.name || 'WCH Team',
+      tags: post.categories?.nodes?.map(cat => cat.name) || []
+    }
+  }));
+  
+  // Generate pages with 12 posts per page
+  return paginate(allPosts, { pageSize: 12 });
+}
+
+const { page } = Astro.props;
+
+// Content for the page header
+const header = {
+  title: 'The <strong>WCH Learn</strong> Blog. News, Articles, and Resources',
+  text: 'Stay informed and stay healthy with WCH Learn.'
+};
+
+// SEO metadata
+const SEO = {
+  title: `WCH Learn | Blog - Page ${page.currentPage}`,
+  description: "Explore the latest news, articles, and resources from WCH Health & Wellness. Stay informed and stay healthy with WCH Learn."
+};
+---
+
+<Layout title={SEO.title} description={SEO.description}>
+  <Hero title={header.title} text={header.text} />
+  <BlogPosts data={page.data} />
+  
+  <Pagination 
+    currentPage={page.currentPage}
+    totalPages={page.lastPage}
+    prevUrl={page.url.prev}
+    nextUrl={page.url.next}
+  />
+</Layout> 

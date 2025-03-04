@@ -1,0 +1,79 @@
+---
+// Ad Card Component
+// ------------
+// Description: A card for displaying advertisements or promotions
+// Properties:
+// - title: The title of the ad
+// - description: The description text
+// - image: The image URL
+// - ctaText: Call to action button text
+// - ctaLink: Call to action link URL
+
+// Props
+type Props = {
+  title: string;
+  description?: string;
+  image?: string;
+  ctaText: string;
+  ctaLink: string;
+};
+
+const { 
+  title, 
+  description, 
+  image = "/placeholder-ad.jpg", 
+  ctaText = "Learn More", 
+  ctaLink = "#" 
+} = Astro.props;
+---
+
+<div class="ad-card">
+  {image && (
+    <div class="ad-card__image-container">
+      <img src={image} alt={title} class="ad-card__image" />
+    </div>
+  )}
+  
+  <div class="ad-card__content">
+    <h3 class="ad-card__title">{title}</h3>
+    
+    {description && (
+      <p class="ad-card__description">{description}</p>
+    )}
+    
+    <a href={ctaLink} class="ad-card__cta">
+      {ctaText}
+    </a>
+  </div>
+</div>
+
+<style>
+  .ad-card {
+    @apply rounded-lg overflow-hidden border border-neutral-200 bg-white shadow-sm;
+  }
+  
+  .ad-card__image-container {
+    @apply relative w-full pt-[56.25%]; /* 16:9 aspect ratio */
+  }
+  
+  .ad-card__image {
+    @apply absolute top-0 left-0 w-full h-full object-cover;
+  }
+  
+  .ad-card__content {
+    @apply p-6 text-center;
+  }
+  
+  .ad-card__title {
+    @apply text-xl font-bold mb-2 text-neutral-800;
+  }
+  
+  .ad-card__description {
+    @apply text-neutral-600 mb-4;
+  }
+  
+  .ad-card__cta {
+    @apply inline-block px-6 py-2 bg-primary-500 text-white rounded-md font-medium 
+    hover:bg-primary-600 transition-colors;
+  }
+</style> 

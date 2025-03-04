@@ -5,10 +5,15 @@
 // - UI
 import Badge from '../Badge.astro'
 
-//Data
-import { getCollection } from 'astro:content'
-const posts = await getCollection('blog')
-const tags = [...new Set(posts.map((post) => post.data.tags).flat())]
+// WordPress GraphQL Client
+import WordPressGraphQLClient from '../../../lib/wordpress.js'
+
+// Fetch categories from WordPress
+const client = new WordPressGraphQLClient();
+const response = await client.getAllCategories();
+const categories = response.categories.nodes;
+const tags = categories.map(cat => cat.name);
+
 const currentPath = new URL(Astro.request.url).pathname
 const pathSegments = currentPath.split('/').filter((segment) => segment.length > 0)
 const currentTag = pathSegments[pathSegments.length - 1] || ''
@@ -17,12 +22,12 @@ const currentTag = pathSegments[pathSegments.length - 1] || ''
 <div class="tags">
 	<Badge link={`/blog/`} name={`All`} type={`${currentTag === 'blog' ? 'primary' : 'neutral'}`} />
 	{
-		tags.map((tag) => (
+		categories.map((category) => (
 			<>
 				<Badge
-					link={`/blog/tags/${tag}`}
-					name={tag}
-					type={`${currentTag === tag ? 'primary' : 'neutral'}`}
+					link={`/blog/tags/${category.slug}`}
+					name={category.name}
+					type={`${currentTag === category.slug ? 'primary' : 'neutral'}`}
 				/>
 			</>
 		))

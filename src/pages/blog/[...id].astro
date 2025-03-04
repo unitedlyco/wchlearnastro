@@ -7,19 +7,71 @@
 // - Layout
 import Layout from '../../layouts/PostLayout.astro'
 
-// Data
-import { getCollection, render  } from 'astro:content'
+// WordPress GraphQL Client
+import WordPressGraphQLClient from '../../lib/wordpress.js'
+
+// Get all posts for static paths
 export async function getStaticPaths() {
-	const blogEntries = await getCollection('blog')
-	return blogEntries.map((entry) => ({
-		params:{ id: decodeURI( entry.id )},
-		props: { entry }
+	const client = new WordPressGraphQLClient();
+	const response = await client.getAllPosts(100); // Adjust number as needed
+	const posts = response.posts.nodes;
+
+	return posts.map((post) => ({
+		params: { id: post.slug },
+		props: { slug: post.slug }
 	}))
 }
-const { entry } = Astro.props
-const { Content } = await render(entry);
+
+const { slug } = Astro.props
+
+// Fetch the full post data
+const client = new WordPressGraphQLClient();
+const response = await client.getPostBySlug(slug);
+const post = response.post;
+
+// Format the data to match your existing structure
+const frontmatter = {
+	id: post.slug,
+	title: post.title,
+	description: post.excerpt.replace(/<\/?[^>]+(>|$)/g, ""), // Strip HTML
+	pubDate: new Date(post.date),
+	image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
+	author: post.author?.node?.name || 'WCH Team',
+	tags: post.categories?.nodes?.map(cat => cat.name) || []
+}
+
+// The post content
+const content = post.content;
 ---
 
-<Layout frontmatter={entry.data}>
-	<Content />
+<Layout frontmatter={frontmatter}>
+	<div class="wp-content" set:html={content}></div>
 </Layout>
+
+<style>
+	.wp-content {
+		@apply max-w-none;
+	}
+	/* Add additional styles to properly format WordPress content */
+	.wp-content :global(img) {
+		@apply my-6 max-w-full rounded-lg;
+	}
+	.wp-content :global(h2) {
+		@apply mt-8 mb-4 text-2xl font-bold;
+	}
+	.wp-content :global(h3) {
+		@apply mt-6 mb-3 text-xl font-bold;
+	}
+	.wp-content :global(p) {
+		@apply mb-4;
+	}
+	.wp-content :global(ul) {
+		@apply mb-4 ml-6 list-disc;
+	}
+	.wp-content :global(ol) {
+		@apply mb-4 ml-6 list-decimal;
+	}
+	.wp-content :global(blockquote) {
+		@apply my-6 border-l-4 border-primary-500 pl-4 italic;
+	}
+</style>

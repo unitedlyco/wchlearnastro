@@ -1,0 +1,95 @@
+---
+// Related Posts Component
+// ------------
+// Description: Displays related posts based on categories
+// Properties:
+// - categories: Array of category names to match
+// - currentPostId: ID of the current post to exclude from results
+// - limit: Maximum number of posts to display
+
+// Components
+import WordPressGraphQLClient from '../../../lib/wordpress.js';
+
+// Props
+type Props = {
+  categories: string[];
+  currentPostId: string;
+  limit?: number;
+};
+
+const { categories = [], currentPostId, limit = 4 } = Astro.props;
+
+// Fetch related posts
+const client = new WordPressGraphQLClient();
+let relatedPosts = [];
+
+if (categories.length > 0) {
+  // Get the first category to query
+  const categorySlug = categories[0].toLowerCase();
+  
+  try {
+    const response = await client.getCategoryPosts(categorySlug, 8);
+    
+    if (response.category && response.category.posts) {
+      // Filter out the current post and limit the number of results
+      relatedPosts = response.category.posts.nodes
+        .filter(post => post.slug !== currentPostId)
+        .slice(0, limit)
+        .map(post => ({
+          id: post.slug,
+          title: post.title,
+          image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
+        }));
+    }
+  } catch (error) {
+    console.error('Error fetching related posts:', error);
+  }
+}
+---
+
+<div class="related-posts">
+  {relatedPosts.length > 0 ? (
+    <div class="related-posts__grid">
+      {relatedPosts.map(post => (
+        <a href={`/blog/${post.id}`} class="related-post">
+          <div class="related-post__image-container">
+            <img 
+              src={post.image} 
+              alt={post.title} 
+              class="related-post__image" 
+            />
+          </div>
+          <h4 class="related-post__title" set:html={post.title} />
+        </a>
+      ))}
+    </div>
+  ) : (
+    <p class="related-posts__empty">No related articles found.</p>
+  )}
+</div>
+
+<style>
+  .related-posts__grid {
+    @apply grid grid-cols-2 gap-4;
+  }
+  
+  .related-post {
+    @apply block no-underline hover:opacity-90 transition-opacity;
+  }
+  
+  .related-post__image-container {
+    @apply relative w-full pt-[75%] mb-2 rounded overflow-hidden;
+  }
+  
+  .related-post__image {
+    @apply absolute top-0 left-0 w-full h-full object-cover;
+  }
+  
+  .related-post__title {
+    @apply text-sm font-medium text-neutral-800 line-clamp-2;
+  }
+  
+  .related-posts__empty {
+    @apply text-neutral-500 italic text-sm;
+  }
+</style> 

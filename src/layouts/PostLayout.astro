@@ -7,34 +7,153 @@ import Layout from './Layout.astro'
 
 // Section Components
 import BlogPostHero from '../components/blocks/blog/BlogPostHero.astro'
+import RelatedPosts from '../components/blocks/blog/RelatedPosts.astro'
+import Breadcrumbs from '../components/ui/Breadcrumbs.astro'
 
 // Content
 // - SEO
 const SEO = {
-	title: `${frontmatter.title} | Foxi`,
+	title: `${frontmatter.title} | WCH Learn`,
 	description: `${frontmatter.description}`
 }
+
+// Get related posts based on categories
+const categories = frontmatter.tags || [];
 ---
 
 <Layout title={SEO.title} description={SEO.description}>
-	<BlogPostHero
-		tags={frontmatter.tags}
-		title={frontmatter.title}
-		author={frontmatter.author}
-		publishDate={frontmatter.pubDate.toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric'
-		})}
-	/>
-
-	<div class="post-body basic-text basic-text--lg">
-		<slot />
+	<div class="post-container">
+		<div class="post-main">
+			<Breadcrumbs classes="mb-6" />
+			
+			{frontmatter.image && (
+				<div class="post-featured-image">
+					<img 
+						src={frontmatter.image} 
+						alt={frontmatter.title} 
+						class="w-full h-auto rounded-lg shadow-md"
+					/>
+				</div>
+			)}
+			
+			<div class="post-meta">
+				<div class="post-meta-top">
+					<span class="post-date">
+						{frontmatter.pubDate.toLocaleDateString('en-US', {
+							year: 'numeric',
+							month: 'long',
+							day: 'numeric'
+						})}
+					</span>
+					
+					<span class="post-meta-divider">|</span>
+					
+					<span class="post-author">
+						Author: {frontmatter.author}
+					</span>
+				</div>
+				
+				{frontmatter.tags && frontmatter.tags.length > 0 && (
+					<div class="post-categories">
+						{frontmatter.tags.map((tag: string) => (
+							<a href={`/blog/tags/${tag.toLowerCase()}`} class="post-category">
+								{tag}
+							</a>
+						))}
+					</div>
+				)}
+			</div>
+			
+			<h1 class="post-title">{frontmatter.title}</h1>
+			
+			<div class="post-content">
+				<slot />
+			</div>
+		</div>
+		
+		<div class="post-sidebar-wrapper">
+			<div class="post-sidebar">
+				<a href="https://worldcouncilforhealth.org/donate/" class="sidebar-ad">
+					<img 
+						src="/sidebar-ad.jpg" 
+						alt="Support WCH" 
+						class="w-full h-auto rounded-lg shadow-sm"
+					/>
+				</a>
+				
+				<div class="sidebar-section">
+					<h3 class="sidebar-heading">Related Articles</h3>
+					<RelatedPosts categories={categories} currentPostId={frontmatter.id} />
+				</div>
+			</div>
+		</div>
 	</div>
 </Layout>
 
 <style>
-	.post-body {
-		@apply mx-auto max-w-3xl px-6 py-12 lg:py-24;
+	.post-container {
+		@apply mx-auto max-w-7xl px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8;
+	}
+	
+	.post-main {
+		@apply lg:col-span-2;
+	}
+	
+	.post-sidebar-wrapper {
+		@apply lg:col-span-1 lg:pt-[50px]; /* Increased padding to move sidebar down */
+	}
+	
+	.post-sidebar {
+		@apply space-y-8 lg:sticky lg:top-[90px] mt-[10px]; /* Increased top offset and added top margin */
+	}
+	
+	.sidebar-ad {
+		@apply block transition-opacity hover:opacity-90;
+	}
+	
+	.post-featured-image {
+		@apply mb-6;
+	}
+	
+	.post-meta {
+		@apply flex flex-col gap-4 mb-4 text-sm text-neutral-500;
+	}
+	
+	.post-meta-top {
+		@apply flex items-center flex-wrap gap-2;
+	}
+	
+	.post-date, .post-author {
+		@apply inline-flex items-center;
+	}
+	
+	.post-meta-divider {
+		@apply text-neutral-300 mx-1;
+	}
+	
+	.post-categories {
+		@apply flex flex-wrap gap-2 mt-1;
+	}
+	
+	.post-category {
+		@apply px-3 py-1 bg-primary-100 text-primary-700 rounded-full hover:bg-primary-200 transition-colors;
+	}
+	
+	.post-title {
+		@apply text-3xl md:text-4xl font-bold mb-4;
+	}
+	
+	.post-content {
+		@apply prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-neutral-800 
+		prose-p:text-neutral-700 prose-a:text-primary-600 prose-a:no-underline hover:prose-a:underline
+		prose-img:rounded-lg;
+	}
+	
+	.sidebar-section {
+		@apply mt-8; /* Additional margin for Related Articles */
+	}
+	
+	.sidebar-heading {
+		@apply text-xl font-bold mb-4 pb-2 border-b border-neutral-200;
 	}
 </style>
