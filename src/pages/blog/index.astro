@@ -13,6 +13,34 @@ import BlogPosts from '../../components/blocks/blog/BlogPosts.astro'
 // WordPress GraphQL Client
 import WordPressGraphQLClient from '../../lib/wordpress.js'
 
+// Define types for WordPress post data
+interface WordPressPost {
+  slug: string;
+  title: string;
+  excerpt: string;
+  date: string;
+  featuredImage?: {
+    node?: {
+      sourceUrl?: string;
+    };
+  };
+  author?: {
+    node?: {
+      name?: string;
+    };
+  };
+  categories?: {
+    nodes?: Array<{
+      name: string;
+    }>;
+  };
+}
+
+// Define type for paginate function parameter
+interface PaginateParams {
+  paginate: any;
+}
+
 // Content
 // - SEO
 const SEO = {
@@ -29,7 +57,7 @@ const header = {
 // Fetch posts from WordPress
 const client = new WordPressGraphQLClient();
 const response = await client.getAllPosts(12);
-const allPosts = response.posts.nodes.map(post => ({
+const allPosts = response.posts.nodes.map((post: WordPressPost) => ({
   id: post.slug,
   data: {
     title: post.title,
@@ -37,11 +65,11 @@ const allPosts = response.posts.nodes.map(post => ({
     pubDate: new Date(post.date),
     image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
     author: post.author?.node?.name || 'WCH Team',
-    tags: post.categories?.nodes?.map(cat => cat.name) || []
+    tags: post.categories?.nodes?.map((cat: { name: string }) => cat.name) || []
   }
 }));
 
-export const getStaticPaths = async ({ paginate }) => {
+export const getStaticPaths = async ({ paginate }: PaginateParams) => {
   return {
     // Your paths here
     revalidate: 3600 // Revalidate every hour

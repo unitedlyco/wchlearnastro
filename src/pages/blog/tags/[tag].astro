@@ -13,13 +13,37 @@ import BlogPosts from '../../../components/blocks/blog/BlogPosts.astro'
 // WordPress GraphQL Client
 import WordPressGraphQLClient from '../../../lib/wordpress.js'
 
+// Define types for WordPress category and post data
+interface WordPressCategory {
+  slug: string;
+  name: string;
+  description?: string;
+}
+
+interface WordPressPost {
+  slug: string;
+  title: string;
+  excerpt: string;
+  date: string;
+  featuredImage?: {
+    node?: {
+      sourceUrl?: string;
+    };
+  };
+  author?: {
+    node?: {
+      name?: string;
+    };
+  };
+}
+
 // Get all categories for static paths
 export async function getStaticPaths() {
 	const client = new WordPressGraphQLClient();
 	const response = await client.getAllCategories();
 	const categories = response.categories.nodes;
 
-	return categories.map((category) => {
+	return categories.map((category: WordPressCategory) => {
 		return {
 			params: { tag: category.slug },
 			props: { category }
@@ -28,12 +52,12 @@ export async function getStaticPaths() {
 }
 
 const { tag } = Astro.params
-const { category } = Astro.props
+const { category } = Astro.props as { category: WordPressCategory }
 
 // Fetch posts for this category
 const client = new WordPressGraphQLClient();
 const response = await client.getCategoryPosts(tag, 12);
-const posts = response.category.posts.nodes.map(post => ({
+const posts = response.category.posts.nodes.map((post: WordPressPost) => ({
   id: post.slug,
   data: {
     title: post.title,
