@@ -77,7 +77,7 @@ const content = post.content;
 
 <style>
 	.wp-content {
-		@apply max-w-none;
+		@apply max-w-none overflow-hidden;
 	}
 	/* Add additional styles to properly format WordPress content */
 	.wp-content :global(img) {
@@ -100,5 +100,20 @@ const content = post.content;
 	}
 	.wp-content :global(blockquote) {
 		@apply my-6 border-l-4 border-primary-500 pl-4 italic;
+	}
+	/* Handle potential overflow issues */
+	.wp-content :global(pre), 
+	.wp-content :global(code),
+	.wp-content :global(table) {
+		@apply max-w-full overflow-x-auto;
+	}
+	/* Ensure all elements respect container width */
+	.wp-content :global(*) {
+		@apply max-w-full;
+	}
+	/* Fix for iframes and embeds */
+	.wp-content :global(iframe),
+	.wp-content :global(embed) {
+		@apply max-w-full;
 	}
 </style>

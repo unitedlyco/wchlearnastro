@@ -96,7 +96,7 @@ const categories = frontmatter.tags || [];
 	}
 	
 	.post-main {
-		@apply lg:col-span-2;
+		@apply lg:col-span-2 overflow-hidden;
 	}
 	
 	.post-sidebar-wrapper {
@@ -146,7 +146,18 @@ const categories = frontmatter.tags || [];
 	.post-content {
 		@apply prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-neutral-800 
 		prose-p:text-neutral-700 prose-a:text-primary-600 prose-a:no-underline hover:prose-a:underline
-		prose-img:rounded-lg;
+		prose-img:rounded-lg overflow-hidden;
+	}
+	
+	/* Additional overflow handling for post content */
+	.post-content :global(pre),
+	.post-content :global(code),
+	.post-content :global(table) {
+		@apply overflow-x-auto;
+	}
+	
+	.post-content :global(img) {
+		@apply max-w-full h-auto;
 	}
 	
 	.sidebar-section {

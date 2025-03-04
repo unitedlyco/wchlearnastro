@@ -15,7 +15,30 @@ import { Icon } from 'astro-icon/components'
 const url = new URL(Astro.request.url)
 const pathname = url.pathname
 const segments = pathname.split('/').filter(Boolean)
-const breadcrumbs = ['Home', ...segments]
+
+// Determine if this is a blog post
+const isBlogPost = segments.length > 1 && segments[0] === 'blog'
+
+// Create breadcrumbs array
+let breadcrumbs = ['Home']
+
+if (isBlogPost) {
+	// For blog posts, use 'Blog' as the second item
+	breadcrumbs.push('Blog')
+	
+	// Add the post title if it exists (truncated if needed)
+	if (segments.length > 1) {
+		const postTitle = segments[segments.length - 1].replace(/-/g, ' ')
+		// Truncate title if it's too long (more than 30 characters)
+		const truncatedTitle = postTitle.length > 30 
+			? postTitle.substring(0, 30) + '...' 
+			: postTitle
+		breadcrumbs.push(truncatedTitle)
+	}
+} else {
+	// For non-blog pages, use the regular segments
+	breadcrumbs = [...breadcrumbs, ...segments]
+}
 
 // Props
 type Props = {
@@ -27,16 +50,26 @@ const { classes } = Astro.props
 <nav aria-label="Breadcrumb" class:list={['breadcrumbs', { [`${classes}`]: classes }]}>
 	<ol class="breadcrumbs__list">
 		{
-			breadcrumbs.map((segment, index) => (
-				<li class="breadcrumbs__list-item">
-					<a href={`/${segments.slice(0, index).join('/')}`} class="breadcrumbs__item-link">
-						{index === 0 ? segment : segment.replace(/-/g, ' ')}
-					</a>
-					{index < breadcrumbs.length - 1 && (
-						<Icon name="chevron-left" class="breadcrumbs__item-icon" />
-					)}
-				</li>
-			))
+			breadcrumbs.map((segment, index) => {
+				// Determine the correct href for each breadcrumb
+				let href = '/'
+				if (index === 1 && isBlogPost) {
+					href = '/blog'
+				} else if (index > 0 && !isBlogPost) {
+					href = `/${segments.slice(0, index).join('/')}`
+				}
+				
+				return (
+					<li class="breadcrumbs__list-item">
+						<a href={href} class="breadcrumbs__item-link">
+							{index === 0 ? segment : segment}
+						</a>
+						{index < breadcrumbs.length - 1 && (
+							<Icon name="chevron-left" class="breadcrumbs__item-icon" />
+						)}
+					</li>
+				)
+			})
 		}
 	</ol>
 </nav>
