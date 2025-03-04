@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+body {
+  font-family: var(--font-family);
+}
+
+/* Add this to override any other font-family declarations */
+*, *::before, *::after {
+  font-family: inherit;
+} 
+
+/* Explicitly set Barlow font for all heading elements */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family) !important;
+} 
+
+/* Update these CSS rules for the logo */
+[data-theme="dark"] .logo-image {
+  content: url("/Learn-White.png");
+}
+
+[data-theme="light"] .logo-image {
+  content: url("/Learn-Pink.png");
+}
+
+/* Add specific sizing for the logos */
+.header__logo .logo-image {
+  width: 197px;
+  height: 47px;
+}
+
+.footer__main-brand .logo-image {
+  width: 157px;
+  height: 37px;
+} 
