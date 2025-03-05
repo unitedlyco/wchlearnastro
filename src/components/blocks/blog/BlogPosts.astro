@@ -145,9 +145,10 @@ const sortedPosts = filteredPosts.sort((a: any, b: any) => {
 		}
 	}
 	
+	/* Removing the 1-column layout for small screens to ensure 2 columns on all mobile devices */
 	@media (max-width: 480px) {
 		.blog-posts-grid {
-			@apply grid-cols-1 gap-y-6;
+			@apply grid-cols-2 gap-3;
 		}
 	}
 </style>

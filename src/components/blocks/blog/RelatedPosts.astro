@@ -180,4 +180,15 @@ if (source === 'substack') {
   .related-posts__empty {
     @apply text-neutral-500 italic text-sm;
   }
+  
+  /* Add specific media query for small screens to ensure 2 columns with appropriate spacing */
+  @media (max-width: 480px) {
+    .related-posts__grid {
+      @apply grid-cols-2 gap-3;
+    }
+    
+    .related-post__title {
+      @apply text-xs;
+    }
+  }
 </style> 
