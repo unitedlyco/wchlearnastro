@@ -1,0 +1,159 @@
+---
+// Blog Tag Pagination Page
+// ------------
+// Description: The blog tag pagination page.
+
+// Components
+// - Layout
+import Layout from '../../../../layouts/Layout.astro'
+// - UI
+import Hero from '../../../../components/blocks/hero/PageHeader.astro'
+import BlogPosts from '../../../../components/blocks/blog/BlogPosts.astro'
+import Pagination from '../../../../components/ui/Pagination.astro'
+
+// WordPress GraphQL Client
+import WordPressGraphQLClient from '../../../../lib/wordpress.js'
+
+// Define types for WordPress category and post data
+interface WordPressCategory {
+  slug: string;
+  name: string;
+  description?: string;
+}
+
+interface WordPressPost {
+  slug: string;
+  title: string;
+  excerpt: string;
+  date: string;
+  featuredImage?: {
+    node?: {
+      sourceUrl?: string;
+    };
+  };
+  author?: {
+    node?: {
+      name?: string;
+    };
+  };
+}
+
+// Enable prerendering for static builds
+export const prerender = true;
+
+// Get all categories and their posts for static paths
+export async function getStaticPaths() {
+  const client = new WordPressGraphQLClient();
+  const response = await client.getAllCategories();
+  const categories = response.categories.nodes;
+  const postsPerPage = 12;
+  const allPaths = [];
+
+  // For each category, fetch all its posts with pagination
+  for (const category of categories) {
+    let hasNextPage = true;
+    let endCursor = null;
+    let pageNumber = 1;
+
+    while (hasNextPage && pageNumber <= 10) { // Limit to 10 pages per category
+      console.log(`Fetching WordPress posts for category ${category.slug}, page ${pageNumber}...`);
+      const postsResponse = await client.getCategoryPosts(category.slug, postsPerPage, endCursor);
+      
+      // Skip if category has no posts or doesn't exist
+      if (!postsResponse.category || !postsResponse.category.posts) {
+        console.log(`Category ${category.slug} has no posts or doesn't exist`);
+        break;
+      }
+      
+      const { pageInfo, nodes: posts } = postsResponse.category.posts;
+      
+      if (posts.length === 0) {
+        break; // No more posts
+      }
+      
+      // Only create numbered pages (page 2+)
+      if (pageNumber > 1) {
+        allPaths.push({
+          params: { 
+            tag: category.slug,
+            page: pageNumber.toString()
+          },
+          props: {
+            category,
+            posts,
+            pageInfo: {
+              ...pageInfo,
+              currentPage: pageNumber,
+              totalPages: pageNumber // Will be updated later
+            }
+          }
+        });
+      }
+
+      hasNextPage = pageInfo.hasNextPage;
+      endCursor = pageInfo.endCursor;
+      pageNumber++;
+      
+      // Add a small delay to avoid overwhelming the WordPress API
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    // Update totalPages for this category's paths
+    const totalPages = pageNumber - 1;
+    const categoryPaths = allPaths.filter(path => path.params.tag === category.slug);
+    categoryPaths.forEach(path => {
+      path.props.pageInfo.totalPages = totalPages;
+    });
+  }
+
+  return allPaths;
+}
+
+const { tag, page } = Astro.params;
+const { category, posts, pageInfo } = Astro.props;
+
+// Transform posts to match our format
+const transformedPosts = posts.map((post: WordPressPost) => ({
+  id: post.slug,
+  data: {
+    title: post.title,
+    description: post.excerpt.replace(/<\/?[^>]+(>|$)/g, ""), // Strip HTML
+    pubDate: new Date(post.date),
+    image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
+    author: post.author?.node?.name || 'WCH Team',
+    tags: [category.name]
+  }
+}));
+
+// Generate pagination URLs
+const prevUrl = pageInfo.currentPage > 2 
+  ? `/blog/tags/${tag}/${pageInfo.currentPage - 1}`
+  : pageInfo.currentPage === 2 ? `/blog/tags/${tag}` : undefined;
+const nextUrl = pageInfo.hasNextPage 
+  ? `/blog/tags/${tag}/${pageInfo.currentPage + 1}`
+  : undefined;
+
+// Content
+// - SEO
+const SEO = {
+  title: `WCH Learn | Posts about ${category.name} - Page ${pageInfo.currentPage}`,
+  description: category.description || `Explore WCH Learn's resources about ${category.name}`
+}
+
+// - Page Header
+const header = {
+  title: `WCH Learn posts about <br><strong>${category.name}</strong>`,
+  text: `Stay informed, stay healthy with all the latest from WCH Learn.`
+}
+---
+
+<Layout title={SEO.title} description={SEO.description}>
+  <Hero title={header.title} text={header.text} />
+  <BlogPosts data={transformedPosts} />
+  <Pagination 
+    currentPage={pageInfo.currentPage}
+    totalPages={pageInfo.totalPages}
+    prevUrl={prevUrl}
+    nextUrl={nextUrl}
+  />
+</Layout> 

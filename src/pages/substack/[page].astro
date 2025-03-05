@@ -1,0 +1,156 @@
+---
+// Substack Pagination Page
+// ------------
+// Description: The Substack pagination page.
+
+// Components
+// - Layout
+import Layout from '../../layouts/Layout.astro'
+// - UI
+import Hero from '../../components/blocks/hero/PageHeader.astro'
+import BlogPosts from '../../components/blocks/blog/BlogPosts.astro'
+import Pagination from '../../components/ui/Pagination.astro'
+
+// Substack RSS Client
+import SubstackRSSClient from '../../lib/substack.js'
+
+// Define types for Substack post data
+interface SubstackPost {
+	title: string;
+	link: string;
+	pubDate: string;
+	content: string;
+	contentSnippet?: string;
+	guid?: string;
+	isoDate?: string;
+	extractedImage?: string;
+}
+
+// Content
+// - SEO
+const SEO = {
+	title: 'WCH Learn | Latest Substack Articles from World Council for Health',
+	description:
+		"Explore the latest Substack articles from World Council for Health. Stay informed and stay healthy with WCH Learn."
+}
+// - Page Header
+const header = {
+	title: 'The <strong>WCH</strong> Substack. Latest Articles and Updates',
+	text: 'Stay informed with the latest Substack articles from World Council for Health.'
+}
+
+// Enable static rendering
+export const prerender = true;
+
+export async function getStaticPaths() {
+	console.log('Generating static paths for Substack pagination pages');
+	const client = new SubstackRSSClient();
+	
+	try {
+		// Fetch first page to get total pages
+		const { pageInfo } = await client.getAllPosts(100, 1, false);
+		const totalPages = pageInfo.totalPages;
+		
+		console.log(`Generating ${totalPages - 1} pagination pages for Substack`);
+		
+		// Generate paths for all pages except page 1 (which is handled by index.astro)
+		return Array.from({ length: totalPages - 1 }, (_, i) => {
+			const page = i + 2; // Start from page 2
+			return {
+				params: { page: page.toString() },
+				props: { page }
+			};
+		});
+	} catch (error) {
+		console.error("Error generating Substack pagination:", error);
+		return [];
+	}
+}
+
+const { page } = Astro.params;
+const currentPage = parseInt(page);
+
+console.log(`Building Substack page ${currentPage}`);
+
+// Fetch posts for current page
+const client = new SubstackRSSClient();
+// Set the third parameter to false to include content for image extraction
+const { posts, pageInfo } = await client.getAllPosts(100, currentPage, false);
+
+console.log(`Fetched ${posts.length} posts for page ${currentPage}. Total pages: ${pageInfo.totalPages}`);
+
+// Transform posts to match our format
+const transformedPosts = posts.map((post: SubstackPost) => {
+	// Use the extractedImage if available
+	let image = post.extractedImage || null;
+	
+	// If no extractedImage, try to extract from content
+	if (!image && post.content) {
+		// First, try to find an image at the beginning of the content
+		// This is likely to be the featured image
+		const leadingImgMatch = post.content.match(/^\s*(?:<(?:figure|p|div)[^>]*>)?\s*<img[^>]+src="([^"]+)"/i);
+		
+		if (leadingImgMatch && leadingImgMatch[1]) {
+			image = leadingImgMatch[1];
+		} else {
+			// If no leading image, try to find any image in the content
+			const anyImgMatch = post.content.match(/<img[^>]+src="([^"]+)"/i);
+			if (anyImgMatch && anyImgMatch[1]) {
+				image = anyImgMatch[1];
+			} else {
+				// Try alternative patterns that might be used in Substack content
+				const altImgMatch = post.content.match(/<figure[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"/i) || 
+									post.content.match(/background-image:\s*url\(['"]?([^'"]+)['"]?\)/i) ||
+									post.content.match(/src=\\?"([^\\"\s]+\.(?:jpg|jpeg|png|gif|webp))\\?"/i);
+				
+				if (altImgMatch && altImgMatch[1]) {
+					image = altImgMatch[1];
+				}
+			}
+		}
+	} 
+	
+	if (!image && post.contentSnippet) {
+		// If we don't have full content but have a snippet, try to find an image there
+		const snippetImgMatch = post.contentSnippet.match(/<img[^>]+src="([^"]+)"/i) ||
+								post.contentSnippet.match(/src=\\?"([^\\"\s]+\.(?:jpg|jpeg|png|gif|webp))\\?"/i) ||
+								post.contentSnippet.match(/background-image:\s*url\(['"]?([^'"]+)['"]?\)/i);
+		
+		if (snippetImgMatch && snippetImgMatch[1]) {
+			image = snippetImgMatch[1];
+		}
+	}
+	
+	// Ensure the image URL is properly formatted
+	if (image && !image.startsWith('http')) {
+		// Handle relative URLs
+		if (image.startsWith('/')) {
+			image = `https://worldcouncilforhealth.substack.com${image}`;
+		} else {
+			image = `https://worldcouncilforhealth.substack.com/${image}`;
+		}
+	}
+	
+	return {
+		title: post.title,
+		contentSnippet: post.contentSnippet || '',
+		pubDate: new Date(post.pubDate),
+		image: image,
+		author: 'WCH Team',
+		link: post.link,
+		tags: []
+	};
+});
+
+// Generate pagination URLs
+const prevUrl = pageInfo.hasPreviousPage ? (currentPage - 1 === 1 ? '/substack' : `/substack/${currentPage - 1}`) : undefined;
+const nextUrl = pageInfo.hasNextPage ? `/substack/${currentPage + 1}` : undefined;
+---
+
+<Layout title={SEO.title} description={SEO.description}>
+	<Hero title={header.title} text={header.text} />
+	
+	<BlogPosts posts={transformedPosts} source="substack" />
+	
+	<Pagination currentPage={currentPage} totalPages={pageInfo.totalPages} prevUrl={prevUrl} nextUrl={nextUrl} />
+</Layout> 

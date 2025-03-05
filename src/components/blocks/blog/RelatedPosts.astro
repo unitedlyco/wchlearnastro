@@ -6,15 +6,18 @@
 // - categories: Array of category names to match
 // - currentPostId: ID of the current post to exclude from results
 // - limit: Maximum number of posts to display
+// - source: Source of the posts (wordpress or substack)
 
 // Components
 import WordPressGraphQLClient from '../../../lib/wordpress.js';
+import SubstackRSSClient from '../../../lib/substack.js';
 
 // Props
 type Props = {
   categories: string[];
   currentPostId: string;
   limit?: number;
+  source?: string;
 };
 
 // Define types for WordPress post data
@@ -28,22 +31,81 @@ interface WordPressPost {
   };
 }
 
+// Define type for Substack post data
+interface SubstackPost {
+  title: string;
+  link: string;
+  pubDate: string;
+  content: string;
+  contentSnippet?: string;
+  guid?: string;
+  isoDate?: string;
+  extractedImage?: string;
+}
+
 // Define type for related posts
 interface RelatedPost {
   id: string;
   title: string;
   image: string;
+  link: string;
 }
 
-const { categories = [], currentPostId, limit = 4 } = Astro.props;
+const { categories = [], currentPostId, limit = 4, source = 'wordpress' } = Astro.props;
 
 // Fetch related posts
-const client = new WordPressGraphQLClient();
 let relatedPosts: RelatedPost[] = [];
 
-if (categories.length > 0) {
+if (source === 'substack') {
+  // Fetch related Substack posts
+  const substackClient = new SubstackRSSClient();
+  try {
+    // Explicitly set excludeContent to false to ensure content is available
+    const { posts } = await substackClient.getAllPosts(limit + 1, 1, false);
+    
+    // Filter out the current post and limit the number of results
+    relatedPosts = posts
+      .filter((post: SubstackPost) => {
+        const url = new URL(post.link);
+        const pathParts = url.pathname.split('/');
+        const slug = pathParts[pathParts.length - 1];
+        return slug !== currentPostId;
+      })
+      .slice(0, limit)
+      .map((post: SubstackPost) => {
+        // Use extractedImage if available, otherwise try to extract from content
+        let image = '/placeholder-image.jpg';
+        
+        // Check if post has extractedImage property
+        if (post.extractedImage) {
+          image = post.extractedImage;
+        }
+        // Only try to extract from content if it exists
+        else if (post.content) {
+          const imgMatch = post.content.match(/<img[^>]+src="([^"]+)"/);
+          if (imgMatch && imgMatch[1]) {
+            image = imgMatch[1];
+          }
+        }
+        
+        const url = new URL(post.link);
+        const pathParts = url.pathname.split('/');
+        const slug = pathParts[pathParts.length - 1];
+        
+        return {
+          id: slug,
+          title: post.title,
+          image: image,
+          link: `/substack/${slug}`
+        };
+      });
+  } catch (error) {
+    console.error('Error fetching related Substack posts:', error);
+  }
+} else if (categories.length > 0) {
   // Get the first category to query
   const categorySlug = categories[0].toLowerCase();
+  const client = new WordPressGraphQLClient();
   
   try {
     const response = await client.getCategoryPosts(categorySlug, 8);
@@ -57,36 +119,44 @@ if (categories.length > 0) {
           id: post.slug,
           title: post.title,
           image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
+          link: `/blog/${post.slug}`
         }));
     }
   } catch (error) {
-    console.error('Error fetching related posts:', error);
+    console.error('Error fetching related WordPress posts:', error);
   }
 }
 ---
 
 <div class="related-posts">
   {relatedPosts.length > 0 ? (
-    <div class="related-posts__grid">
-      {relatedPosts.map((post: RelatedPost) => (
-        <a href={`/blog/${post.id}`} class="related-post">
-          <div class="related-post__image-container">
-            <img 
-              src={post.image} 
-              alt={post.title} 
-              class="related-post__image" 
-            />
-          </div>
-          <h4 class="related-post__title" set:html={post.title} />
-        </a>
-      ))}
-    </div>
+    <>
+      <h3 class="related-posts__heading">Related Articles</h3>
+      <div class="related-posts__grid">
+        {relatedPosts.map((post: RelatedPost) => (
+          <a href={post.link} class="related-post">
+            <div class="related-post__image-container">
+              <img 
+                src={post.image} 
+                alt={post.title} 
+                class="related-post__image" 
+              />
+            </div>
+            <h4 class="related-post__title" set:html={post.title} />
+          </a>
+        ))}
+      </div>
+    </>
   ) : (
     <p class="related-posts__empty">No related articles found.</p>
   )}
 </div>
 
 <style>
+  .related-posts__heading {
+    @apply text-xl font-bold mb-4 mt-8;
+  }
+  
   .related-posts__grid {
     @apply grid grid-cols-2 gap-4;
   }

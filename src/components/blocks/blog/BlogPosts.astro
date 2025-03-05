@@ -3,7 +3,10 @@
 // ------------
 // Description: A grid of blog posts sorted by date in a 3 column layout.
 // Properties:
-// - data: An array of blog posts
+// - data: An array of blog posts (legacy format)
+// - posts: An array of posts (new format, used for Substack)
+// - source: The source of the posts ("blog" or "substack")
+// - basePath: The base path for post links (defaults to "/blog/")
 
 // Components
 // - Layout
@@ -15,36 +18,103 @@ import Post from '../../../components/ui/cards/BlogCard.astro'
 import TagNavigation from '../../../components/ui/blog/TagNavigation.astro'
 
 // Props
-const { data, isLoading = false } = Astro.props
+const { data, posts, isLoading = false, source = "blog", basePath = "/blog/" } = Astro.props
+
+// Determine which data source to use
+const postsToDisplay = posts || data || [];
+
+// Instead of filtering out posts without images, provide a default image
+// This ensures all posts are displayed even if they don't have images
+const filteredPosts = postsToDisplay.map((post: any) => {
+	if (source === "substack" && !post.image) {
+		// Create a shallow copy of the post with a default image
+		return {
+			...post,
+			image: "/og.jpg" // Use an existing image in the public directory
+		};
+	}
+	return post;
+});
+
+// Set the correct base path based on source
+const postBasePath = source === "substack" ? "/substack/" : basePath;
 
 // Function to sort posts by date
-const sortedPosts = data.sort((a: any, b: any) => {
-	return new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime()
+const sortedPosts = filteredPosts.sort((a: any, b: any) => {
+	const dateA = source === "substack" ? 
+		new Date(a.pubDate || a.data?.pubDate).getTime() : 
+		new Date(a.data.pubDate).getTime();
+	
+	const dateB = source === "substack" ? 
+		new Date(b.pubDate || b.data?.pubDate).getTime() : 
+		new Date(b.data.pubDate).getTime();
+		
+	return dateB - dateA;
 })
 ---
 
 <Section>
 	<div class="blog-posts-container">
-		<TagNavigation />
+		{source === "blog" && <TagNavigation />}
 		
 		{isLoading ? (
 			<div class="loading-spinner">Loading posts...</div>
 		) : (
 			<div class="blog-posts-grid">
-				{sortedPosts.map((post: any) => (
-					<div class="blog-post-item">
-						<Post
-							link={`/blog/${post.id}`}
-							title={post.data.title}
-							subtitle={`By ${post.data.author} on ${new Date(post.data.pubDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`}
-							image={post.data.image}
-							tags={post.data.tags}
-							mobileSimplified={true}
-						>
-							{post.data.description}
-						</Post>
-					</div>
-				))}
+				{sortedPosts.map((post: any) => {
+					// Handle different post formats based on source
+					const postId = source === "substack" ? 
+						(() => {
+							const url = new URL(post.link || post.data?.link);
+							const pathParts = url.pathname.split('/');
+							return pathParts[pathParts.length - 1];
+						})() : 
+						post.id;
+					
+					const postTitle = source === "substack" ? 
+						(post.title || post.data?.title) : 
+						post.data.title;
+					
+					const postAuthor = source === "substack" ? 
+						(post.author || post.data?.author || "WCH Team") : 
+						post.data.author;
+					
+					const postDate = source === "substack" ? 
+						new Date(post.pubDate || post.data?.pubDate) : 
+						new Date(post.data.pubDate);
+					
+					const postImage = source === "substack" ? 
+						(post.image || post.data?.image) : 
+						post.data.image;
+					
+					const postTags = source === "substack" ? 
+						(post.tags || post.data?.tags || []) : 
+						post.data.tags;
+					
+					const postUrl = `${postBasePath}${postId}`;
+					
+					return (
+						<div class="blog-post-item">
+							<Post
+								link={postUrl}
+								title={postTitle}
+								subtitle={`By ${postAuthor} on ${postDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`}
+								image={postImage}
+								tags={postTags}
+								mobileSimplified={true}
+							>
+								<div class="flex items-start">
+									<div class="inline-flex items-center px-4 py-2 text-sm font-medium text-[#fdfdfd] bg-[#002f56] rounded-lg hover:bg-[#e55d99] hover:text-[#fdfdfd] transition-all">
+										Read More
+										<svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+										</svg>
+									</div>
+								</div>
+							</Post>
+						</div>
+					);
+				})}
 			</div>
 		)}
 	</div>
@@ -59,9 +129,25 @@ const sortedPosts = data.sort((a: any, b: any) => {
 		@apply grid grid-cols-3 gap-6;
 	}
 	
+	.blog-post-item {
+		@apply rounded-[10px] overflow-hidden transition-shadow duration-300 hover:shadow-[0_4px_20px_rgba(0,0,0,0.1)];
+	}
+	
+	@media (max-width: 1024px) {
+		.blog-posts-grid {
+			@apply grid-cols-2 gap-4;
+		}
+	}
+	
 	@media (max-width: 768px) {
 		.blog-posts-grid {
-			@apply grid grid-cols-2 gap-x-[8px] gap-y-[10px];
+			@apply grid-cols-2 gap-4;
+		}
+	}
+	
+	@media (max-width: 480px) {
+		.blog-posts-grid {
+			@apply grid-cols-1 gap-y-6;
 		}
 	}
 </style>

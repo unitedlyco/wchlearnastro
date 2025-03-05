@@ -19,6 +19,7 @@ const SEO = {
 
 // Get related posts based on categories
 const categories = frontmatter.tags || [];
+const isSubstack = categories.includes('Substack');
 ---
 
 <Layout title={SEO.title} description={SEO.description}>
@@ -69,6 +70,14 @@ const categories = frontmatter.tags || [];
 			<div class="post-content">
 				<slot />
 			</div>
+			
+			{frontmatter.originalLink && (
+				<div class="original-link-container">
+					<a href={frontmatter.originalLink} target="_blank" rel="noopener noreferrer" class="original-link-button">
+						Read original post on Substack
+					</a>
+				</div>
+			)}
 		</div>
 		
 		<div class="post-sidebar-wrapper">
@@ -83,7 +92,11 @@ const categories = frontmatter.tags || [];
 				
 				<div class="sidebar-section">
 					<h3 class="sidebar-heading">Related Articles</h3>
-					<RelatedPosts categories={categories} currentPostId={frontmatter.id} />
+					<RelatedPosts 
+						categories={categories} 
+						currentPostId={frontmatter.id} 
+						source={isSubstack ? "substack" : "wordpress"}
+					/>
 				</div>
 			</div>
 		</div>
@@ -166,5 +179,13 @@ const categories = frontmatter.tags || [];
 	
 	.sidebar-heading {
 		@apply text-xl font-bold mb-4 pb-2 border-b border-neutral-200;
+	}
+	
+	.original-link-container {
+		@apply mt-8 pt-4 border-t border-gray-200 text-center;
+	}
+	
+	.original-link-button {
+		@apply inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors;
 	}
 </style>

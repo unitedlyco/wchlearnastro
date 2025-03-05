@@ -8,7 +8,9 @@ import vercel from "@astrojs/vercel";
 // https://astro.build/config
 export default defineConfig({
   site: "https://foxi.netlify.app/",
-  output: process.env.NODE_ENV === "production" ? "server" : "static",
+  // Always use static output for this project since we're generating static pages
+  output: "static",
+  // Only use Vercel adapter in production
   adapter: process.env.NODE_ENV === "production" ? vercel({
     analytics: true,
     // Increase build timeout for network requests

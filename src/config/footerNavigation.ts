@@ -35,13 +35,13 @@ export interface FooterData {
 
 export const footerNavigationData: FooterData = {
 	footerAbout: {
-		title: 'Foxi.',
+		title: 'WCH Learn',
 		aboutText:
-			'Expertly made, responsive, accessible components in React and HTML ready to be used on your website or app. Just copy and paste them on your Tailwind CSS project.',
+			'Learn. by World Council For Health is an educational resource to help you along your journey to health and well-being.',
 		logo: {
-			src: '/logo.svg',
-			alt: 'The tailwind astro theme',
-			text: 'Foxi.'
+			src: '/favicon.png',
+			alt: 'WCH Learn',
+			text: 'WCH Learn.'
 		}
 	},
 	footerColumns: [

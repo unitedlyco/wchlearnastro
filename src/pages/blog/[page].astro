@@ -31,69 +31,219 @@ interface WordPressPost {
   };
 }
 
-// Define type for pagination
-interface PaginationProps {
-  data: any[];
-  currentPage: number;
-  lastPage: number;
-  url: {
-    prev: string | undefined;
-    next: string | undefined;
-  };
-}
-
-// Define type for paginate function
-interface PaginateFunction {
-  paginate: (data: any[], options: { pageSize: number }) => any[];
-}
-
 // Enable prerendering for static builds
 export const prerender = true;
 
-export async function getStaticPaths({ paginate }: PaginateFunction) {
+export async function getStaticPaths() {
   const client = new WordPressGraphQLClient();
-  const response = await client.getAllPosts(100); // Get all posts for pagination
+  const postsPerPage = 12;
   
-  // Map WordPress posts to the format your components expect
-  const allPosts = response.posts.nodes.map((post: WordPressPost) => ({
-    id: post.slug,
-    data: {
-      title: post.title,
-      description: post.excerpt.replace(/<\/?[^>]+(>|$)/g, ""), // Strip HTML
-      pubDate: new Date(post.date),
-      image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
-      author: post.author?.node?.name || 'WCH Team',
-      tags: post.categories?.nodes?.map((cat: { name: string }) => cat.name) || []
+  // Create a cache key for total pages
+  const totalPagesCacheKey = 'wp_total_pages';
+  
+  // Try to get total pages from cache first
+  let totalPages = 1;
+  let allPaths = [];
+  
+  try {
+    // Check if we have cached total pages
+    const cachedTotalPages = await client.getFromFileCache(totalPagesCacheKey);
+    if (cachedTotalPages) {
+      totalPages = cachedTotalPages;
+      console.log(`Using cached total pages: ${totalPages}`);
+      
+      // Generate paths for all pages except page 1 (which is handled by index.astro)
+      for (let pageNumber = 2; pageNumber <= totalPages; pageNumber++) {
+        // Try to get cached posts for this page
+        const pageCacheKey = `wp_page_${pageNumber}_posts`;
+        const cachedPageData = await client.getFromFileCache(pageCacheKey);
+        
+        if (cachedPageData) {
+          console.log(`Using cached data for page ${pageNumber}`);
+          allPaths.push({
+            params: { page: pageNumber.toString() },
+            props: { 
+              posts: cachedPageData.posts,
+              pageInfo: {
+                hasNextPage: pageNumber < totalPages,
+                hasPreviousPage: true,
+                currentPage: pageNumber,
+                totalPages: totalPages
+              }
+            }
+          });
+        } else {
+          // Calculate the cursor for this page
+          let cursor = null;
+          let currentPage = 1;
+          
+          // Get first page to start pagination
+          const firstPageResponse = await client.getAllPosts(postsPerPage);
+          cursor = firstPageResponse.posts.pageInfo.endCursor;
+          
+          // Fetch pages until we reach the desired page
+          while (currentPage < pageNumber - 1 && cursor) {
+            currentPage++;
+            const response = await client.getAllPosts(postsPerPage, cursor);
+            cursor = response.posts.pageInfo.endCursor;
+            
+            if (!response.posts.pageInfo.hasNextPage) {
+              break;
+            }
+          }
+          
+          // Fetch the actual page we need
+          const response = await client.getAllPosts(postsPerPage, cursor);
+          const { pageInfo, nodes: posts } = response.posts;
+          
+          // Cache this page's data
+          await client.saveToFileCache(pageCacheKey, { posts }, 86400000); // 24 hours
+          
+          allPaths.push({
+            params: { page: pageNumber.toString() },
+            props: { 
+              posts,
+              pageInfo: {
+                ...pageInfo,
+                currentPage: pageNumber,
+                totalPages: totalPages
+              }
+            }
+          });
+        }
+      }
+    } else {
+      // No cached total pages, need to calculate
+      // Get first page to start pagination
+      const firstPageResponse = await client.getAllPosts(postsPerPage);
+      let hasNextPage = firstPageResponse.posts.pageInfo.hasNextPage;
+      let endCursor = firstPageResponse.posts.pageInfo.endCursor;
+      
+      // Start from page 2 since page 1 is handled by index.astro
+      let pageNumber = 2;
+      
+      // Fetch all pages to determine total (limit to 10 pages to avoid excessive build time)
+      const maxPagesToCheck = 10;
+      let pagesChecked = 1;
+      
+      while (hasNextPage && pagesChecked < maxPagesToCheck) {
+        console.log(`Fetching WordPress posts for page ${pageNumber}...`);
+        const response = await client.getAllPosts(postsPerPage, endCursor);
+        const { pageInfo, nodes: posts } = response.posts;
+        
+        if (posts.length === 0) {
+          break; // No more posts
+        }
+        
+        // Cache this page's data
+        const pageCacheKey = `wp_page_${pageNumber}_posts`;
+        await client.saveToFileCache(pageCacheKey, { posts }, 86400000); // 24 hours
+        
+        allPaths.push({
+          params: { page: pageNumber.toString() },
+          props: { 
+            posts,
+            pageInfo: {
+              ...pageInfo,
+              currentPage: pageNumber,
+              totalPages: pageNumber // This will be updated with the final count
+            }
+          }
+        });
+        
+        hasNextPage = pageInfo.hasNextPage;
+        endCursor = pageInfo.endCursor;
+        pageNumber++;
+        pagesChecked++;
+      }
+      
+      // If we hit the max pages to check but there are still more pages,
+      // estimate a reasonable total (e.g., 20 pages)
+      if (hasNextPage && pagesChecked >= maxPagesToCheck) {
+        pageNumber = 20; // A reasonable default maximum
+      }
+      
+      // Update totalPages in all paths
+      totalPages = pageNumber - 1; // -1 because we incremented at the end of the loop
+      console.log(`Generated ${allPaths.length} pages for WordPress blog posts (pages 2-${totalPages})`);
+      
+      // Cache the total pages
+      await client.saveToFileCache(totalPagesCacheKey, totalPages, 86400000); // 24 hours
+      
+      allPaths = allPaths.map(path => ({
+        ...path,
+        props: {
+          ...path.props,
+          pageInfo: {
+            ...path.props.pageInfo,
+            totalPages
+          }
+        }
+      }));
     }
-  }));
+  } catch (error) {
+    console.error('Error generating static paths for blog pagination:', error);
+    // Return a minimal set of paths in case of error
+    return [
+      {
+        params: { page: "2" },
+        props: { 
+          posts: [],
+          pageInfo: {
+            hasNextPage: false,
+            hasPreviousPage: true,
+            currentPage: 2,
+            totalPages: 2
+          }
+        }
+      }
+    ];
+  }
   
-  // Generate pages with 12 posts per page
-  return paginate(allPosts, { pageSize: 12 });
+  return allPaths;
 }
 
-const { page } = Astro.props as { page: PaginationProps };
+const { page } = Astro.params;
+const { posts, pageInfo } = Astro.props;
+const currentPage = parseInt(page);
+
+// Transform WordPress posts to our format
+const transformedPosts = posts.map((post: WordPressPost) => ({
+  id: post.slug,
+  data: {
+    title: post.title,
+    description: post.excerpt.replace(/<\/?[^>]+(>|$)/g, ""), // Strip HTML
+    pubDate: new Date(post.date),
+    image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
+    author: post.author?.node?.name || 'WCH Team',
+    tags: post.categories?.nodes?.map((cat: { name: string }) => cat.name) || []
+  }
+}));
+
+// Generate pagination URLs
+const prevUrl = currentPage > 2 ? `/blog/${currentPage - 1}` : `/blog`;
+const nextUrl = pageInfo.hasNextPage ? `/blog/${currentPage + 1}` : undefined;
 
 // Content for the page header
 const header = {
-  title: 'The <strong>WCH Learn</strong> Blog. News, Articles, and Resources',
-  text: 'Stay informed and stay healthy with WCH Learn.'
+  title: 'The <strong>WCH</strong> Blog. Latest Articles and Updates',
+  text: 'Stay informed with the latest articles from World Council for Health.'
 };
 
 // SEO metadata
 const SEO = {
-  title: `WCH Learn | Blog - Page ${page.currentPage}`,
-  description: "Explore the latest news, articles, and resources from WCH Health & Wellness. Stay informed and stay healthy with WCH Learn."
+  title: `WCH Learn | Latest Articles from World Council for Health - Page ${currentPage}`,
+  description: 'Explore the latest articles from World Council for Health. Stay informed and stay healthy with WCH Learn.'
 };
 ---
 
 <Layout title={SEO.title} description={SEO.description}>
   <Hero title={header.title} text={header.text} />
-  <BlogPosts data={page.data} />
-  
+  <BlogPosts data={transformedPosts} />
   <Pagination 
-    currentPage={page.currentPage}
-    totalPages={page.lastPage}
-    prevUrl={page.url.prev}
-    nextUrl={page.url.next}
+    currentPage={currentPage} 
+    totalPages={pageInfo.totalPages} 
+    prevUrl={prevUrl} 
+    nextUrl={nextUrl} 
   />
 </Layout> 

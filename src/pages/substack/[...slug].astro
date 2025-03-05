@@ -1,0 +1,368 @@
+---
+// Substack Post Page
+// ------------
+// Description: The Substack post page.
+
+// Components
+// - Layout
+import Layout from '../../layouts/PostLayout.astro';
+import SubstackRSSClient from '../../lib/substack.js';
+
+// Define types for Substack post data
+interface SubstackPost {
+  title: string;
+  link: string;
+  pubDate: string;
+  content: string;
+  contentSnippet?: string;
+  guid?: string;
+  isoDate?: string;
+  extractedImage?: string;
+}
+
+// Enable static rendering
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const client = new SubstackRSSClient();
+  
+  try {
+    // Get all posts with full content for better image extraction
+    const { posts } = await client.getAllPosts(100, 1, false);
+    
+    return posts.map((post: SubstackPost) => {
+      const url = new URL(post.link);
+      const pathParts = url.pathname.split('/');
+      const slug = pathParts[pathParts.length - 1];
+      
+      // Extract the featured image - prioritize the extractedImage field
+      let featuredImage = post.extractedImage || null;
+      
+      // If no extractedImage, try to extract from content
+      if (!featuredImage && post.content) {
+        // First, try to find an image at the beginning of the content
+        // This is likely to be the featured image
+        const leadingImgMatch = post.content.match(/^\s*(?:<(?:figure|p|div)[^>]*>)?\s*<img[^>]+src="([^"]+)"/i);
+        
+        if (leadingImgMatch && leadingImgMatch[1]) {
+          featuredImage = leadingImgMatch[1];
+        } else {
+          // If no leading image, try to find any image in the content
+          const anyImgMatch = post.content.match(/<img[^>]+src="([^"]+)"/i);
+          if (anyImgMatch && anyImgMatch[1]) {
+            featuredImage = anyImgMatch[1];
+          } else {
+            // Try alternative patterns that might be used in Substack content
+            const altImgMatch = post.content.match(/<figure[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"/i) || 
+                              post.content.match(/background-image:\s*url\(['"]?([^'"]+)['"]?\)/i) ||
+                              post.content.match(/src=\\?"([^\\"\s]+\.(?:jpg|jpeg|png|gif|webp))\\?"/i);
+            
+            if (altImgMatch && altImgMatch[1]) {
+              featuredImage = altImgMatch[1];
+            }
+          }
+        }
+      }
+      
+      // Ensure the image URL is properly formatted
+      if (featuredImage && !featuredImage.startsWith('http')) {
+        // Handle relative URLs
+        if (featuredImage.startsWith('/')) {
+          featuredImage = `https://worldcouncilforhealth.substack.com${featuredImage}`;
+        } else {
+          featuredImage = `https://worldcouncilforhealth.substack.com/${featuredImage}`;
+        }
+      }
+      
+      return {
+        params: { slug },
+        props: { slug }
+      };
+    });
+  } catch (error) {
+    console.error("Error generating Substack post paths:", error);
+    return [];
+  }
+}
+
+const { slug } = Astro.params;
+let post;
+let error = false;
+
+try {
+  // Fetch the full post data
+  const client = new SubstackRSSClient();
+  post = await client.getPostBySlug(slug);
+  
+  // Extract the featured image - prioritize the extractedImage field
+  let featuredImage = post.extractedImage || null;
+  
+  // If no extractedImage, try to extract from content
+  if (!featuredImage && post.content) {
+    // First, try to find an image at the beginning of the content
+    // This is likely to be the featured image
+    const leadingImgMatch = post.content.match(/^\s*(?:<(?:figure|p|div)[^>]*>)?\s*<img[^>]+src="([^"]+)"/i);
+    
+    if (leadingImgMatch && leadingImgMatch[1]) {
+      featuredImage = leadingImgMatch[1];
+    } else {
+      // If no leading image, try to find any image in the content
+      const anyImgMatch = post.content.match(/<img[^>]+src="([^"]+)"/i);
+      if (anyImgMatch && anyImgMatch[1]) {
+        featuredImage = anyImgMatch[1];
+      } else {
+        // Try alternative patterns that might be used in Substack content
+        const altImgMatch = post.content.match(/<figure[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"/i) || 
+                          post.content.match(/background-image:\s*url\(['"]?([^'"]+)['"]?\)/i) ||
+                          post.content.match(/src=\\?"([^\\"\s]+\.(?:jpg|jpeg|png|gif|webp))\\?"/i);
+        
+        if (altImgMatch && altImgMatch[1]) {
+          featuredImage = altImgMatch[1];
+        }
+      }
+    }
+  }
+  
+  // Ensure the image URL is properly formatted
+  if (featuredImage && !featuredImage.startsWith('http')) {
+    // Handle relative URLs
+    if (featuredImage.startsWith('/')) {
+      featuredImage = `https://worldcouncilforhealth.substack.com${featuredImage}`;
+    } else {
+      featuredImage = `https://worldcouncilforhealth.substack.com/${featuredImage}`;
+    }
+  }
+  
+  post.image = featuredImage;
+} catch (e) {
+  console.error(`Error fetching post with slug "${slug}":`, e);
+  error = true;
+  post = {
+    title: 'Post Not Available',
+    content: '<p>We apologize, but this post could not be loaded at this time.</p>',
+    pubDate: new Date(),
+    image: '/placeholder-image.jpg',
+    author: 'WCH Team',
+    link: `https://worldcouncilforhealth.substack.com/${slug}`,
+    id: slug
+  };
+}
+
+// Format the data to match your existing structure
+const frontmatter = {
+  id: slug,
+  title: post.title,
+  description: post.contentSnippet || '',
+  pubDate: new Date(post.pubDate),
+  image: post.image,
+  author: 'WCH Team',
+  tags: ['Substack'], // Add Substack as a tag
+  originalLink: post.link // Add original link for Substack attribution
+};
+
+// The post content
+let processedContent = post.content;
+
+// Only process if we have a valid image
+if (post.image && post.image !== '/placeholder-image.jpg') {
+  // Helper function to extract the base filename from a URL
+  const getBaseFilename = (url: string) => {
+    try {
+      // Extract just the filename part
+      const filename = url.split('/').pop() || '';
+      // Remove any query parameters
+      const baseFilename = filename.split('?')[0];
+      // Remove any hash fragments
+      return baseFilename.split('#')[0];
+    } catch (e) {
+      return '';
+    }
+  };
+
+  // Get the base filename of the featured image
+  const baseFilename = getBaseFilename(post.image);
+  
+  // Escape special regex characters in the image URL and filename
+  const imgSrc = post.image.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const filenamePattern = baseFilename ? baseFilename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+  
+  // More comprehensive approach to remove the featured image from the content
+  
+  // 1. Try to remove the image if it's directly at the beginning of the content
+  const directImgPattern = new RegExp(`^\\s*<img[^>]*src=["']${imgSrc}["'][^>]*>\\s*`, 'i');
+  processedContent = processedContent.replace(directImgPattern, '');
+  
+  // 2. Try to remove the image if it's wrapped in a paragraph at the beginning
+  const paragraphImgPattern = new RegExp(`^\\s*<p[^>]*>\\s*<img[^>]*src=["']${imgSrc}["'][^>]*>\\s*</p>\\s*`, 'i');
+  processedContent = processedContent.replace(paragraphImgPattern, '');
+  
+  // 3. Try to remove the image if it's wrapped in a div at the beginning
+  const divImgPattern = new RegExp(`^\\s*<div[^>]*>\\s*<img[^>]*src=["']${imgSrc}["'][^>]*>\\s*</div>\\s*`, 'i');
+  processedContent = processedContent.replace(divImgPattern, '');
+  
+  // 4. Try to remove the image if it's wrapped in a figure at the beginning
+  const figureImgPattern = new RegExp(`^\\s*<figure[^>]*>\\s*<img[^>]*src=["']${imgSrc}["'][^>]*>\\s*(?:<figcaption[^>]*>.*?</figcaption>\\s*)?</figure>\\s*`, 'i');
+  processedContent = processedContent.replace(figureImgPattern, '');
+  
+  // 5. Try to remove the image if it's wrapped in an anchor tag at the beginning
+  const anchorImgPattern = new RegExp(`^\\s*<a[^>]*>\\s*<img[^>]*src=["']${imgSrc}["'][^>]*>\\s*</a>\\s*`, 'i');
+  processedContent = processedContent.replace(anchorImgPattern, '');
+  
+  // 6. Try to remove the image if it's in a captioned-image-container div
+  const captionedImgPattern = new RegExp(`<div[^>]*class=["'][^"']*captioned-image-container[^"']*["'][^>]*>\\s*(?:<a[^>]*>)?\\s*<img[^>]*src=["']${imgSrc}["'][^>]*>\\s*(?:</a>)?\\s*(?:<div[^>]*class=["'][^"']*image-caption[^"']*["'][^>]*>.*?</div>)?\\s*</div>`, 'i');
+  processedContent = processedContent.replace(captionedImgPattern, '');
+  
+  // 7. Try to remove any instance of the image anywhere in the content
+  // This is a more aggressive approach but ensures the image is removed
+  const anywhereImgPattern = new RegExp(`<img[^>]*src=["']${imgSrc}["'][^>]*>`, 'i');
+  processedContent = processedContent.replace(anywhereImgPattern, '');
+  
+  // 8. If we have a filename, try to remove any image with that filename
+  // This helps catch variations of the same image with different URLs
+  if (filenamePattern) {
+    const filenameImgPattern = new RegExp(`<img[^>]*src=["'][^"']*${filenamePattern}(?:\\?[^"']*)?["'][^>]*>`, 'gi');
+    processedContent = processedContent.replace(filenameImgPattern, '');
+  }
+  
+  // 9. Try to remove any empty paragraphs or divs that might be left after removing the image
+  processedContent = processedContent.replace(/<p[^>]*>\s*<\/p>/gi, '');
+  processedContent = processedContent.replace(/<div[^>]*>\s*<\/div>/gi, '');
+  
+  // 10. Try to remove any empty figure elements
+  processedContent = processedContent.replace(/<figure[^>]*>\s*<\/figure>/gi, '');
+}
+
+// Clean up Substack-specific elements
+
+// 1. Strip out image-link-expand elements - more comprehensive approach
+// These are typically used to make images clickable and expandable
+
+// First, try to match the standard pattern
+processedContent = processedContent.replace(/<a\s+class="(?:[^"]*\s)?image-link-expand(?:\s[^"]*)?"\s+[^>]*>([\s\S]*?)<\/a>/gi, '$1');
+
+// Also try to match any anchor tag that has image-link-expand anywhere in its attributes
+processedContent = processedContent.replace(/<a[^>]*image-link-expand[^>]*>([\s\S]*?)<\/a>/gi, '$1');
+
+// Also try to match any anchor tag that contains only an image
+processedContent = processedContent.replace(/<a[^>]*>(\s*<img[^>]*>\s*)<\/a>/gi, '$1');
+
+// Also try to match any anchor tag with a data-component attribute related to images
+processedContent = processedContent.replace(/<a[^>]*data-component=["']image["'][^>]*>([\s\S]*?)<\/a>/gi, '$1');
+
+// Also try to match any anchor tag with a role attribute related to images
+processedContent = processedContent.replace(/<a[^>]*role=["']button["'][^>]*>(\s*<img[^>]*>\s*)<\/a>/gi, '$1');
+
+// 2. Remove any remaining image-link-expand classes from other elements
+processedContent = processedContent.replace(/class="([^"]*)image-link-expand([^"]*)"/gi, 'class="$1$2"');
+processedContent = processedContent.replace(/class="([^"]*)expandable-image([^"]*)"/gi, 'class="$1$2"');
+processedContent = processedContent.replace(/class="([^"]*)zoomable-image([^"]*)"/gi, 'class="$1$2"');
+processedContent = processedContent.replace(/class="([^"]*)image-expandable([^"]*)"/gi, 'class="$1$2"');
+
+// Remove Substack pencraft classes - comprehensive approach
+// This processes all class attributes and removes pencraft-related classes
+processedContent = processedContent.replace(/class="([^"]*)"/gi, (match: string, classContent: string) => {
+  // Split by whitespace to get individual classes
+  const classes = classContent.split(/\s+/).filter((cls: string) => 
+    cls !== 'pencraft' && 
+    cls !== 'pc-display-flex' && 
+    cls !== 'pc-gap-8' && 
+    cls !== 'pc-reset' &&
+    cls !== 'icon-container' &&
+    cls !== 'restack-image' &&
+    cls !== 'view-image' &&
+    cls !== '' // Remove empty classes
+  );
+  
+  // If no classes remain, remove the class attribute entirely
+  if (classes.length === 0) {
+    return '';
+  }
+  
+  // Otherwise, join the remaining classes
+  return `class="${classes.join(' ')}"`;
+});
+
+// Also specifically target the exact class combinations mentioned
+processedContent = processedContent.replace(/<div\s+class="icon-container restack-image"[^>]*>([\s\S]*?)<\/div>/gi, '$1');
+processedContent = processedContent.replace(/<div\s+class="icon-container view-image"[^>]*>([\s\S]*?)<\/div>/gi, '$1');
+
+// More comprehensive patterns to handle these classes when they appear with other classes
+processedContent = processedContent.replace(/<div[^>]*class=["'][^"']*icon-container[^"']*restack-image[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi, '$1');
+processedContent = processedContent.replace(/<div[^>]*class=["'][^"']*restack-image[^"']*icon-container[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi, '$1');
+processedContent = processedContent.replace(/<div[^>]*class=["'][^"']*icon-container[^"']*view-image[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi, '$1');
+processedContent = processedContent.replace(/<div[^>]*class=["'][^"']*view-image[^"']*icon-container[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi, '$1');
+
+// Remove any remaining Substack-specific container elements
+processedContent = processedContent.replace(/<div[^>]*data-component=["']image-container["'][^>]*>([\s\S]*?)<\/div>/gi, '$1');
+---
+
+<Layout frontmatter={frontmatter}>
+  {error ? (
+    <div class="error-container">
+      <h2>Content Temporarily Unavailable</h2>
+      <p>We're having trouble connecting to our content server. Please try again later.</p>
+      <a href="/substack" class="btn btn-primary mt-4">Return to Substack</a>
+    </div>
+  ) : (
+    <div class="substack-content" set:html={processedContent}></div>
+  )}
+</Layout>
+
+<style>
+  .substack-content {
+    @apply max-w-none overflow-hidden;
+  }
+  /* Add additional styles to properly format Substack content */
+  .substack-content :global(img) {
+    @apply my-6 max-w-full rounded-lg;
+  }
+  .substack-content :global(h2) {
+    @apply mt-8 mb-4 text-2xl font-bold;
+  }
+  .substack-content :global(h3) {
+    @apply mt-6 mb-3 text-xl font-bold;
+  }
+  .substack-content :global(p) {
+    @apply mb-4;
+  }
+  .substack-content :global(ul) {
+    @apply mb-4 ml-6 list-disc;
+  }
+  .substack-content :global(ol) {
+    @apply mb-4 ml-6 list-decimal;
+  }
+  .substack-content :global(blockquote) {
+    @apply my-6 border-l-4 border-primary-500 pl-4 italic;
+  }
+  /* Handle potential overflow issues */
+  .substack-content :global(pre), 
+  .substack-content :global(code),
+  .substack-content :global(table) {
+    @apply max-w-full overflow-x-auto;
+  }
+  /* Ensure all elements respect container width */
+  .substack-content :global(*) {
+    @apply max-w-full;
+  }
+  /* Fix for iframes and embeds */
+  .substack-content :global(iframe),
+  .substack-content :global(embed) {
+    @apply max-w-full;
+  }
+  
+  .error-container {
+    @apply p-8 text-center rounded-lg bg-gray-50 my-8;
+  }
+  .error-container h2 {
+    @apply text-2xl font-bold mb-4;
+  }
+  .error-container p {
+    @apply mb-4 text-gray-600;
+  }
+  .btn {
+    @apply inline-block px-6 py-2 rounded-md font-medium;
+  }
+  .btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+  }
+</style> 

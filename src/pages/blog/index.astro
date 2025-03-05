@@ -5,13 +5,13 @@
 
 // Components
 // - Layout
-import Layout from '../../layouts/Layout.astro'
-// - UI
-import Hero from '../../components/blocks/hero/PageHeader.astro'
-import BlogPosts from '../../components/blocks/blog/BlogPosts.astro'
+import Layout from '../../layouts/Layout.astro';
+import Hero from '../../components/blocks/hero/PageHeader.astro';
+import BlogPosts from '../../components/blocks/blog/BlogPosts.astro';
+import Pagination from '../../components/ui/Pagination.astro';
 
-// WordPress GraphQL Client
-import WordPressGraphQLClient from '../../lib/wordpress.js'
+// Import the WordPress client
+import WordPressGraphQLClient from '../../lib/wordpress.js';
 
 // Define types for WordPress post data
 interface WordPressPost {
@@ -36,28 +36,64 @@ interface WordPressPost {
   };
 }
 
-// Define type for paginate function parameter
-interface PaginateParams {
-  paginate: any;
-}
+// Enable prerendering for static builds
+export const prerender = true;
 
-// Content
-// - SEO
-const SEO = {
-	title: 'WCH Learn | Latest WCH Health & Wellness News, Articles, and Resources',
-	description:
-		"Explore the latest news, articles, and resources from WCH Health & Wellness. Stay informed and stay healthy with WCH Learn."
-}
-// - Page Header
-const header = {
-	title: 'The <strong>WCH Learn</strong> Blog. News, Articles, and Resources',
-	text: 'Stay informed and stay healthy with WCH Learn.'
-}
+// Create a cache key for total pages
+const totalPagesCacheKey = 'wp_total_pages';
 
-// Fetch posts from WordPress
+// Fetch posts for the first page
 const client = new WordPressGraphQLClient();
 const response = await client.getAllPosts(12);
-const allPosts = response.posts.nodes.map((post: WordPressPost) => ({
+const posts = response.posts.nodes;
+const pageInfo = response.posts.pageInfo;
+
+// Try to get total pages from cache first
+let totalPages = 1;
+try {
+  const cachedTotalPages = await client.getFromFileCache(totalPagesCacheKey);
+  if (cachedTotalPages) {
+    totalPages = cachedTotalPages;
+    console.log(`Using cached total pages: ${totalPages}`);
+  } else {
+    // Only calculate total pages if not in cache
+    let hasMorePages = pageInfo.hasNextPage;
+    let endCursor = pageInfo.endCursor;
+    
+    // Check if there are more pages (up to 10 max to avoid too many requests)
+    const maxPagesToCheck = 10;
+    let pagesChecked = 1;
+    
+    while (hasMorePages && pagesChecked < maxPagesToCheck) {
+      const nextPageResponse = await client.getAllPosts(12, endCursor);
+      
+      if (!nextPageResponse.posts || nextPageResponse.posts.nodes.length === 0) {
+        break;
+      }
+      
+      totalPages++;
+      pagesChecked++;
+      hasMorePages = nextPageResponse.posts.pageInfo.hasNextPage;
+      endCursor = nextPageResponse.posts.pageInfo.endCursor;
+    }
+    
+    // If we hit the max pages to check but there are still more pages,
+    // estimate a reasonable total (e.g., 20 pages)
+    if (hasMorePages && pagesChecked >= maxPagesToCheck) {
+      totalPages = 20; // A reasonable default maximum
+    }
+    
+    // Cache the total pages result
+    await client.saveToFileCache(totalPagesCacheKey, totalPages, 86400000); // 24 hours
+  }
+} catch (error) {
+  console.error('Error calculating total pages:', error);
+  // Default to showing just 1 page if there's an error
+  totalPages = 1;
+}
+
+// Transform WordPress posts to our format
+const transformedPosts = posts.map((post: WordPressPost) => ({
   id: post.slug,
   data: {
     title: post.title,
@@ -69,20 +105,29 @@ const allPosts = response.posts.nodes.map((post: WordPressPost) => ({
   }
 }));
 
-export const getStaticPaths = async ({ paginate }: PaginateParams) => {
-  return {
-    // Your paths here
-    revalidate: 3600 // Revalidate every hour
-  };
+// Generate pagination URL for next page
+const nextUrl = pageInfo.hasNextPage ? `/blog/2` : undefined;
+
+// Content for the page header
+const header = {
+  title: 'The <strong>WCH</strong> Blog. Latest Articles and Updates',
+  text: 'Stay informed with the latest articles from World Council for Health.'
 };
 
-// Enable static rendering
-export const prerender = true;
+// SEO metadata
+const SEO = {
+  title: 'WCH Learn | Latest Articles from World Council for Health',
+  description: 'Explore the latest articles from World Council for Health. Stay informed and stay healthy with WCH Learn.'
+};
 ---
 
 <Layout title={SEO.title} description={SEO.description}>
-	<Hero title={header.title} text={header.text} />
-	<BlogPosts data={allPosts} />
+  <Hero title={header.title} text={header.text} />
+  <BlogPosts data={transformedPosts} />
+  <Pagination 
+    currentPage={1} 
+    totalPages={totalPages} 
+    prevUrl={undefined} 
+    nextUrl={nextUrl} 
+  />
 </Layout>
-
-<meta http-equiv="refresh" content="0;url=/blog/1" />

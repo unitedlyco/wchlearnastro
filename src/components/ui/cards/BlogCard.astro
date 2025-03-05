@@ -35,66 +35,91 @@ const {
 	subtitle,
 	image,
 	link,
-	classes = '!shadow-none border border-neutral-100 dark:border-neutral-800',
+	classes = 'bg-white dark:bg-neutral-900 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300',
 	tags,
 	mobileSimplified = false
 } = Astro.props
 ---
 
 <Card classes={`blog-card ${classes}`}>
-	<a href={link} class="block h-full">
-		{image && <Image src={image} alt={title} width={600} height={400} />}
-		<CardBody>
-			<h3 class="post-title">
-				<span>{title}</span>
-			</h3>
-			<h4 class="post-subtitle" class:list={[{ 'mobile-hidden': mobileSimplified }]}>{subtitle}</h4>
-			<div class:list={[{ 'mobile-hidden': mobileSimplified }]}>
+	<a href={link} class="block h-full group relative">
+		<div class="relative overflow-hidden aspect-[16/9]">
+			{image && typeof image === 'string' ? (
+				<img 
+					src={image} 
+					alt={title} 
+					class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+				/>
+			) : image && (
+				<Image 
+					src={image} 
+					alt={title} 
+					width={600} 
+					height={338}
+					class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+				/>
+			)}
+		</div>
+		<CardBody classes="flex flex-col h-[calc(100%-56.25%)]">
+			<div class="flex-1">
+				<h3 class="post-title group-hover:text-primary-600 transition-colors">
+					<span>{title}</span>
+				</h3>
+				<h4 class="post-subtitle" class:list={[{ 'mobile-hidden': mobileSimplified }]}>{subtitle}</h4>
+			</div>
+			
+			<div class="mt-auto">
 				<slot />
 			</div>
-			{mobileSimplified && <div class="read-more-mobile">Read More</div>}
-		</CardBody>
 
-		{
-			tags && (
-				<div class="post-tags" class:list={[{ 'mobile-hidden': mobileSimplified }]}>
-					{tags.map((tag: string) => (
-						<Badge name={tag} link={`/blog/tags/` + tag} classes="capitalize" />
-					))}
-				</div>
-			)
-		}
+			{
+				tags && (
+					<div class="post-tags" class:list={[{ 'mobile-hidden': mobileSimplified }]}>
+						{tags.map((tag: string) => (
+							<Badge name={tag} link={`/blog/tags/` + tag} classes="capitalize" />
+						))}
+					</div>
+				)
+			}
+		</CardBody>
 	</a>
 </Card>
 
 <style>
 	.post-title {
-		@apply mb-0 text-xl;
+		@apply mb-2 text-xl font-bold text-neutral-800 dark:text-neutral-100;
 	}
 	.post-title span {
 		@apply text-inherit;
 	}
 	.post-subtitle {
-		@apply mb-6 text-sm font-normal text-neutral-400 dark:text-neutral-400;
+		@apply mb-3 text-sm font-normal text-neutral-500 dark:text-neutral-400;
+	}
+	.post-content {
+		@apply text-neutral-600 dark:text-neutral-300 text-sm leading-relaxed;
 	}
 	.post-tags {
-		@apply flex gap-2 border-t border-neutral-100 px-6 py-4 dark:border-neutral-800 relative z-10;
+		@apply flex flex-wrap gap-2 mt-4 py-4 border-t border-neutral-100 dark:border-neutral-800;
 	}
 	.read-more-mobile {
-		@apply hidden text-sm font-medium text-primary-600 mt-2;
+		@apply text-sm font-medium text-neutral-600 dark:text-neutral-300 inline-flex items-center;
+	}
+
+	:global(.card-body[data-astro-cid-4v6mohoo]) {
+		padding: 0.8rem;
 	}
 	
 	@media (max-width: 768px) {
 		.blog-card {
-			@apply !border-0 !shadow-none;
+			@apply !shadow-none;
 		}
 		
 		.blog-card :global(.card-body) {
-			@apply !p-2 !px-4;
+			@apply !p-3;
 		}
 		
 		.post-title {
-			@apply text-base mb-3;
+			@apply text-lg mb-2;
 		}
 		
 		.mobile-hidden {
@@ -102,7 +127,7 @@ const {
 		}
 		
 		.read-more-mobile {
-			@apply block mt-2;
+			@apply flex;
 		}
 	}
 

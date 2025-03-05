@@ -9,6 +9,7 @@ import Layout from '../../../layouts/Layout.astro'
 // - UI
 import Hero from '../../../components/blocks/hero/PageHeader.astro'
 import BlogPosts from '../../../components/blocks/blog/BlogPosts.astro'
+import Pagination from '../../../components/ui/Pagination.astro'
 
 // WordPress GraphQL Client
 import WordPressGraphQLClient from '../../../lib/wordpress.js'
@@ -40,27 +41,76 @@ interface WordPressPost {
 // Enable prerendering for static builds
 export const prerender = true;
 
-// Get all categories for static paths
+// Get all categories and their first page of posts for static paths
 export async function getStaticPaths() {
-	const client = new WordPressGraphQLClient();
-	const response = await client.getAllCategories();
-	const categories = response.categories.nodes;
+  const client = new WordPressGraphQLClient();
+  const response = await client.getAllCategories();
+  const categories = response.categories.nodes;
+  const postsPerPage = 12;
+  const allPaths = [];
 
-	return categories.map((category: WordPressCategory) => {
-		return {
-			params: { tag: category.slug },
-			props: { category }
-		}
-	})
+  // For each category, fetch the first page of posts
+  for (const category of categories) {
+    console.log(`Fetching first page of WordPress posts for category ${category.slug}...`);
+    const postsResponse = await client.getCategoryPosts(category.slug, postsPerPage);
+    
+    // Skip if category has no posts or doesn't exist
+    if (!postsResponse.category || !postsResponse.category.posts) {
+      console.log(`Category ${category.slug} has no posts or doesn't exist`);
+      continue;
+    }
+    
+    const { pageInfo, nodes: posts } = postsResponse.category.posts;
+    
+    if (posts.length === 0) {
+      console.log(`Category ${category.slug} has no posts`);
+      continue;
+    }
+    
+    // Determine total pages for this category
+    let totalPages = 1;
+    let hasMorePages = pageInfo.hasNextPage;
+    let endCursor = pageInfo.endCursor;
+    
+    // Check if there are more pages (up to 10)
+    while (hasMorePages && totalPages < 10) {
+      const nextPageResponse = await client.getCategoryPosts(category.slug, postsPerPage, endCursor);
+      
+      if (!nextPageResponse.category || !nextPageResponse.category.posts || nextPageResponse.category.posts.nodes.length === 0) {
+        break;
+      }
+      
+      totalPages++;
+      hasMorePages = nextPageResponse.category.posts.pageInfo.hasNextPage;
+      endCursor = nextPageResponse.category.posts.pageInfo.endCursor;
+      
+      // Add a small delay to avoid overwhelming the WordPress API
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    // Add the first page path
+    allPaths.push({
+      params: { tag: category.slug },
+      props: {
+        category,
+        posts,
+        pageInfo: {
+          ...pageInfo,
+          currentPage: 1,
+          totalPages
+        }
+      }
+    });
+  }
+
+  return allPaths;
 }
 
-const { tag } = Astro.params
-const { category } = Astro.props as { category: WordPressCategory }
+const { tag } = Astro.params;
+const { category, posts, pageInfo } = Astro.props;
 
-// Fetch posts for this category
-const client = new WordPressGraphQLClient();
-const response = await client.getCategoryPosts(tag, 12);
-const posts = response.category.posts.nodes.map((post: WordPressPost) => ({
+// Transform posts to match our format
+const transformedPosts = posts.map((post: WordPressPost) => ({
   id: post.slug,
   data: {
     title: post.title,
@@ -72,21 +122,30 @@ const posts = response.category.posts.nodes.map((post: WordPressPost) => ({
   }
 }));
 
+// Generate pagination URLs
+const nextUrl = pageInfo.hasNextPage ? `/blog/tags/${tag}/2` : undefined;
+
 // Content
 // - SEO
 const SEO = {
-	title: `WCH Learn | Posts about ${category.name}`,
-	description: category.description || `Explore WCH Learn's resources about ${category.name}`
+  title: `WCH Learn | Posts about ${category.name}`,
+  description: category.description || `Explore WCH Learn's resources about ${category.name}`
 }
 
 // - Page Header
 const header = {
-	title: `WCH Learn posts about <br><strong>${category.name}</strong>`,
-	text: `Stay informed, stay healthy with all the latest from WCH Learn.`
+  title: `WCH Learn posts about <br><strong>${category.name}</strong>`,
+  text: `Stay informed, stay healthy with all the latest from WCH Learn.`
 }
 ---
 
 <Layout title={SEO.title} description={SEO.description}>
-	<Hero title={header.title} text={header.text} />
-	<BlogPosts data={posts} />
+  <Hero title={header.title} text={header.text} />
+  <BlogPosts data={transformedPosts} />
+  <Pagination 
+    currentPage={1}
+    totalPages={pageInfo.totalPages}
+    prevUrl={undefined}
+    nextUrl={nextUrl}
+  />
 </Layout>

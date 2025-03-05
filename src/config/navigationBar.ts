@@ -40,7 +40,8 @@ export const navigationBarData: NavData = {
 	navItems: [
 		{ name: 'Home', link: '/' },
 		{ name: 'Blog', link: '/blog' },
-		{ name: 'Detox Guide', link: '/detox-guide' },
+		{ name: 'Substack', link: '/substack' },
+		{ name: 'Detox', link: '/detox-guide' },
 		{
 			name: 'Resources',
 			link: '#',
