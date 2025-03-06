@@ -135,7 +135,12 @@ const savedNavActions = navActions.map((action) => {
 			<div class="header__actions">
 				{
 					savedNavActions.map((action) => (
-						<Button classes="flex-auto" size={action.size} style={action.style} link={action.link}>
+						<Button 
+							classes="flex-auto" 
+							size={action.size} 
+							style={action.style} 
+							link={action.link}
+						>
 							{action.name}
 						</Button>
 					))
@@ -216,52 +221,26 @@ const savedNavActions = navActions.map((action) => {
                           localStorage.getItem('sb-access-token');
     
     // Find the navigation action button
-    const navActionButton = document.querySelector('.header__actions a');
+    const navActionButton = document.querySelector('.header__actions .button');
     if (!navActionButton) return;
     
     // Update button text and link based on auth state
     if (hasAccessToken) {
       navActionButton.textContent = 'Dashboard';
       navActionButton.setAttribute('href', '/dashboard');
-      
-      // Find the button element inside the anchor
-      const buttonElement = navActionButton.querySelector('button');
-      if (buttonElement) {
-        // If using a Button component, update its class
-        buttonElement.className = buttonElement.className.replace(/btn-primary|btn-neutral/g, '') + ' btn-secondary';
-      } else {
-        // If the anchor itself has the style classes
-        navActionButton.className = navActionButton.className.replace(/btn-primary|btn-neutral/g, '') + ' btn-secondary';
-      }
+      navActionButton.className = navActionButton.className
+        .replace(/button--primary/g, 'button--secondary');
     } else {
       navActionButton.textContent = 'Join Now!';
       navActionButton.setAttribute('href', '/signup');
-      
-      // Find the button element inside the anchor
-      const buttonElement = navActionButton.querySelector('button');
-      if (buttonElement) {
-        // If using a Button component, update its class
-        buttonElement.className = buttonElement.className.replace(/btn-secondary|btn-neutral/g, '') + ' btn-primary';
-      } else {
-        // If the anchor itself has the style classes
-        navActionButton.className = navActionButton.className.replace(/btn-secondary|btn-neutral/g, '') + ' btn-primary';
-      }
+      navActionButton.className = navActionButton.className
+        .replace(/button--secondary/g, 'button--primary');
     }
   }
 
-  // Update on page load
-  document.addEventListener('DOMContentLoaded', updateNavButton);
-  
-  // Listen for storage events (localStorage changes)
-  window.addEventListener('storage', (event) => {
-    if (event.key === 'sb-access-token' || event.key === null) {
-      updateNavButton();
-    }
-  });
-  
-  // Create a custom event listener for auth state changes
+  // Listen for auth state changes
   window.addEventListener('auth-state-change', updateNavButton);
   
-  // Check periodically for auth state changes (fallback)
-  setInterval(updateNavButton, 2000);
+  // Initial check
+  updateNavButton();
 </script>

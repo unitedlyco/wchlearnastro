@@ -52,9 +52,9 @@ const buttonClasses = [
 ---
 
 {
-	variation === 'link' ? (
+	link ? (
 		<a
-			href={link || '#'}
+			href={link}
 			class:list={buttonClasses}
 			{...(modal ? { 'data-modal': modal } : {})}
 			{...(id ? { id } : {})}
