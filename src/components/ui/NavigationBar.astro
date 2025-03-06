@@ -27,12 +27,28 @@ function isActivePath(currentPath: string): boolean {
 	return path === currentPath || path === `${currentPath}/`
 }
 
+// Check if user is logged in
+const { session } = Astro.locals;
+const isLoggedIn = !!session?.access_token;
+
 // Type assertion for navActions to ensure type safety
-const savedNavActions = navActions.map((action) => ({
-	...action,
-	size: action.size as 'base' | 'lg' | 'sm',
-	style: action.style as 'primary' | 'secondary' | 'neutral'
-}))
+const savedNavActions = navActions.map((action) => {
+	// If logged in and action name is "Join Now!", change it to "Dashboard"
+	if (isLoggedIn && action.name === "Join Now!") {
+		return {
+			...action,
+			name: "Dashboard",
+			link: "/dashboard",
+			style: "secondary" as "primary" | "secondary" | "neutral",
+			size: action.size as 'base' | 'lg' | 'sm'
+		};
+	}
+	return {
+		...action,
+		size: action.size as 'base' | 'lg' | 'sm',
+		style: action.style as 'primary' | 'secondary' | 'neutral'
+	};
+});
 ---
 
 <header class="header">
@@ -119,7 +135,7 @@ const savedNavActions = navActions.map((action) => ({
 			<div class="header__actions">
 				{
 					savedNavActions.map((action) => (
-						<Button classes="flex-auto" size={action.size} style={action.style} modal="signup">
+						<Button classes="flex-auto" size={action.size} style={action.style} link={action.link}>
 							{action.name}
 						</Button>
 					))
@@ -191,3 +207,61 @@ const savedNavActions = navActions.map((action) => ({
 		@apply fixed bottom-0 left-0 hidden w-full items-center justify-between gap-4 border-t border-neutral-100 bg-white px-6 py-4 lg:relative lg:ml-auto lg:flex lg:w-auto lg:border-none lg:bg-transparent lg:px-0 lg:py-0 dark:border-neutral-800 dark:bg-neutral-950 lg:dark:bg-transparent [.header\_\_menu--open~&]:flex;
 	}
 </style>
+
+<script>
+  // Function to update navigation button based on authentication state
+  function updateNavButton() {
+    // Check if user is logged in by looking for tokens
+    const hasAccessToken = document.cookie.includes('sb-access-token') || 
+                          localStorage.getItem('sb-access-token');
+    
+    // Find the navigation action button
+    const navActionButton = document.querySelector('.header__actions a');
+    if (!navActionButton) return;
+    
+    // Update button text and link based on auth state
+    if (hasAccessToken) {
+      navActionButton.textContent = 'Dashboard';
+      navActionButton.setAttribute('href', '/dashboard');
+      
+      // Find the button element inside the anchor
+      const buttonElement = navActionButton.querySelector('button');
+      if (buttonElement) {
+        // If using a Button component, update its class
+        buttonElement.className = buttonElement.className.replace(/btn-primary|btn-neutral/g, '') + ' btn-secondary';
+      } else {
+        // If the anchor itself has the style classes
+        navActionButton.className = navActionButton.className.replace(/btn-primary|btn-neutral/g, '') + ' btn-secondary';
+      }
+    } else {
+      navActionButton.textContent = 'Join Now!';
+      navActionButton.setAttribute('href', '/signup');
+      
+      // Find the button element inside the anchor
+      const buttonElement = navActionButton.querySelector('button');
+      if (buttonElement) {
+        // If using a Button component, update its class
+        buttonElement.className = buttonElement.className.replace(/btn-secondary|btn-neutral/g, '') + ' btn-primary';
+      } else {
+        // If the anchor itself has the style classes
+        navActionButton.className = navActionButton.className.replace(/btn-secondary|btn-neutral/g, '') + ' btn-primary';
+      }
+    }
+  }
+
+  // Update on page load
+  document.addEventListener('DOMContentLoaded', updateNavButton);
+  
+  // Listen for storage events (localStorage changes)
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'sb-access-token' || event.key === null) {
+      updateNavButton();
+    }
+  });
+  
+  // Create a custom event listener for auth state changes
+  window.addEventListener('auth-state-change', updateNavButton);
+  
+  // Check periodically for auth state changes (fallback)
+  setInterval(updateNavButton, 2000);
+</script>

@@ -1,0 +1,160 @@
+---
+// Courses Page
+// ------------
+// Description: A page for users to view their enrolled courses.
+
+// Force server-side rendering
+export const prerender = false;
+
+// Components
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import Button from '../../components/ui/Button.astro';
+import { Icon } from 'astro-icon/components';
+import Toast from '../../components/ui/Toast.astro';
+
+// Helper function for server-side logging
+function logToTerminal(message: string, data?: any) {
+  const timestamp = new Date().toISOString();
+  console.log('\x1b[34m%s\x1b[0m', `[${timestamp}] 📚 Courses: ${message}`);
+  if (data) {
+    console.log('\x1b[33m%s\x1b[0m', JSON.stringify(data, null, 2));
+  }
+}
+
+// Get user from locals (set by middleware)
+const { user, session, displayName } = Astro.locals;
+
+// Log authentication state
+logToTerminal('Authentication state', {
+  hasUser: !!user,
+  hasSession: !!session,
+  userId: user?.id,
+  email: user?.email,
+  displayName
+});
+
+// Redirect if not authenticated (backup to middleware)
+if (!user || !session?.access_token) {
+  logToTerminal('No authenticated user, redirecting to signin');
+  return Astro.redirect('/signin');
+}
+
+// Page Metadata
+const title = 'My Courses | Learn';
+const description = 'View and manage your enrolled courses.';
+
+// Mock courses data (in a real app, this would come from a database)
+const enrolledCourses = [
+  {
+    id: 'course-1',
+    title: 'Nutrition Fundamentals',
+    description: 'Learn the basics of nutrition and healthy eating habits.',
+    progress: 65,
+    image: '/images/placeholder-course.jpg',
+    lastAccessed: '2 days ago'
+  },
+  {
+    id: 'course-2',
+    title: 'Wellness Coaching',
+    description: 'Master the art of wellness coaching and client management.',
+    progress: 25,
+    image: '/images/placeholder-course.jpg',
+    lastAccessed: '1 week ago'
+  }
+];
+
+const recommendedCourses = [
+  {
+    id: 'course-3',
+    title: 'Advanced Nutrition Therapy',
+    description: 'Deep dive into therapeutic applications of nutrition.',
+    image: '/images/placeholder-course.jpg'
+  },
+  {
+    id: 'course-4',
+    title: 'Business Skills for Health Coaches',
+    description: 'Learn how to build and grow your coaching practice.',
+    image: '/images/placeholder-course.jpg'
+  }
+];
+---
+
+<DashboardLayout title={title} description={description} activeMenuItem="courses">
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">My Courses</h1>
+      <Button style="primary" size="sm">
+        <Icon name="mdi:book-plus" class="w-4 h-4 mr-2" />
+        Browse Courses
+      </Button>
+    </div>
+
+    <!-- Enrolled Courses -->
+    <div class="space-y-4">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Enrolled Courses</h2>
+      
+      {enrolledCourses.length > 0 ? (
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {enrolledCourses.map(course => (
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div class="aspect-video bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <Icon name="mdi:book-open-page-variant" class="w-12 h-12 text-gray-400 dark:text-gray-500" />
+              </div>
+              <div class="p-5">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{course.title}</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{course.description}</p>
+                
+                <div class="mb-4">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Progress</span>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{course.progress}%</span>
+                  </div>
+                  <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                    <div class="bg-primary-600 h-2.5 rounded-full" style={`width: ${course.progress}%`}></div>
+                  </div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-gray-500 dark:text-gray-400">Last accessed: {course.lastAccessed}</span>
+                  <Button style="primary" size="sm">Continue</Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700 text-center">
+          <div class="mb-4">
+            <Icon name="mdi:book-open-variant" class="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto" />
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Courses Yet</h3>
+          <p class="text-gray-500 dark:text-gray-400 mb-4">You haven't enrolled in any courses yet.</p>
+          <Button style="primary" size="base">Browse Courses</Button>
+        </div>
+      )}
+    </div>
+
+    <!-- Recommended Courses -->
+    <div class="space-y-4">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Recommended For You</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {recommendedCourses.map(course => (
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="aspect-video bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+              <Icon name="mdi:book-open-page-variant" class="w-12 h-12 text-gray-400 dark:text-gray-500" />
+            </div>
+            <div class="p-5">
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{course.title}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{course.description}</p>
+              
+              <div class="flex justify-end">
+                <Button style="primary" size="sm">Enroll Now</Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</DashboardLayout> 

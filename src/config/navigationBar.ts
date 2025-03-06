@@ -21,8 +21,8 @@ export interface NavItem {
 export interface NavAction {
 	name: string
 	link: string
-	style: string
-	size: string
+	style: 'primary' | 'secondary' | 'neutral'
+	size: 'sm' | 'base' | 'lg'
 }
 
 export interface NavData {
@@ -54,5 +54,5 @@ export const navigationBarData: NavData = {
 		},
 		{ name: 'Contact', link: '/contact' }
 	],
-	navActions: [{ name: 'Join Now!', link: '/', style: 'primary', size: 'lg' }]
+	navActions: [{ name: 'Join Now!', link: '/signup', style: 'primary', size: 'lg' }]
 }

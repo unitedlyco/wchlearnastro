@@ -1,80 +1,85 @@
 ---
-// Button
+// Button Component
 // ------------
-// Description: Buttons are interactive elements activated by a user with a mouse, keyboard, or tap
-// Properties:
-// - Type: the type of the button (link, button, submit, reset). If its type is link, the button will be rendered as an anchor tag
-// - Size: the size of the button (lg, base, sm)
-// - Link: the link of the button (if type is link)
-// - Modal: The id of the modal that the button can trigger (optional)
-// - Style: the style of the button (primary, secondary, neutral)
-// - Variation: the variation of the button (defaultoutline, link)
-// - Elevated: whether the button is elevated or not (optional)
-// - classes: additional classes
-// Reference: https://wind-ui.com/components/buttons/
+// Description: A reusable button component with various styles and sizes.
 
 // Props
 type Props = {
-	type?: 'link' | 'button' | 'submit' | 'reset'
-	size?: 'lg' | 'base' | 'sm'
+	style?: 'primary' | 'secondary' | 'neutral'
+	variant?: 'primary' | 'secondary' | 'neutral' | 'danger' | 'ghost'
+	type?: 'button' | 'submit' | 'reset'
+	size?: 'xs' | 'sm' | 'base' | 'lg'
+	classes?: string
+	disabled?: boolean
+	id?: string
 	link?: string
 	modal?: string
-	style?: 'primary' | 'secondary' | 'neutral'
 	variation?: 'outline' | 'link'
 	elevated?: boolean
-	classes?: string
 }
+
 const {
+	style = 'primary',
+	variant,
 	type = 'button',
 	size = 'base',
+	classes,
+	disabled,
+	id,
 	link,
 	modal,
-	style = 'primary',
 	variation,
-	elevated,
-	classes
+	elevated
 } = Astro.props
+
+// Use variant if provided, otherwise use style
+const buttonStyle = variant || style
+
+const baseClass = 'button'
+const styleClass = `button--${buttonStyle}`
+const sizeClass = `button--${size}`
+const variationClass = variation ? `button--${variation}` : ''
+const elevatedClass = elevated ? 'button--elevated' : ''
+
+const buttonClasses = [
+	baseClass,
+	styleClass,
+	sizeClass,
+	variationClass,
+	elevatedClass,
+	classes
+].filter(Boolean)
 ---
 
 {
-	type === 'link' || link ? (
+	link ? (
 		<a
 			href={link}
-			class:list={[
-				'button',
-				{ ['button--' + `${size}`]: size },
-				{ ['button--' + `${style}`]: style },
-				{ ['button--' + `${variation}`]: variation },
-				{ ['button--elevated']: elevated },
-				{ [`${classes}`]: classes }
-			]}
+			class:list={buttonClasses}
+			{...(modal ? { 'data-modal': modal } : {})}
 		>
 			<slot />
 		</a>
 	) : (
 		<button
 			type={type}
-			class:list={[
-				'button',
-				{ ['button--' + `${size}`]: size },
-				{ ['button--' + `${style}`]: style },
-				{ ['button--' + `${variation}`]: variation },
-				{ ['button--elevated']: elevated },
-				{ [`${classes}`]: classes }
-			]}
+			class:list={buttonClasses}
+			disabled={disabled}
+			id={id}
 			{...(modal ? { 'data-modal': modal } : {})}
 		>
 			<slot />
 		</button>
 	)
 }
+
 <style>
 	.button {
 		@apply inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded font-bold tracking-wide transition duration-300 focus-visible:outline-none disabled:cursor-not-allowed disabled:shadow-none;
 	}
 
 	.button--lg {
-		@apply h-12 px-6 text-sm [&.button--elevated]:shadow-lg [&.button--elevated]:hover:shadow-md [&.button--elevated]:focus:shadow-md;
+		@apply h-12 px-6 text-base [&.button--elevated]:shadow-lg [&.button--elevated]:hover:shadow-md [&.button--elevated]:focus:shadow-md;
 	}
 
 	.button--base {
@@ -84,21 +89,44 @@ const {
 	.button--sm {
 		@apply h-8 px-4 text-xs [&.button--elevated]:shadow-md [&.button--elevated]:hover:shadow-sm [&.button--elevated]:focus:shadow-sm;
 	}
-	.button--outline {
-		@apply border;
+	
+	.button--xs {
+		@apply h-6 px-2 text-xs [&.button--elevated]:shadow-sm [&.button--elevated]:hover:shadow-none [&.button--elevated]:focus:shadow-none;
 	}
+
+	.button--outline {
+		@apply border-2;
+	}
+
 	.button--link {
 		@apply inline-flex items-center justify-start gap-2 px-0 font-normal;
 	}
+
 	.button--primary {
-		@apply bg-primary-500 text-white hover:bg-primary-700 focus:bg-primary-700 disabled:border-primary-300 disabled:bg-primary-300 [&.button--elevated]:shadow-lg [&.button--elevated]:shadow-primary-500/30 [&.button--elevated]:hover:shadow-primary-500/30 [&.button--elevated]:focus:shadow-primary-500/30 [&.button--link]:bg-transparent [&.button--link]:text-primary-500 hover:[&.button--link]:text-primary-600 focus:[&.button--link]:text-primary-600 [&.button--outline]:border-primary-500 [&.button--outline]:bg-transparent [&.button--outline]:text-primary-500 [&.button--outline]:hover:border-primary-600 [&.button--outline]:hover:text-primary-600;
+		@apply bg-primary-500 text-white hover:bg-primary-600 focus:bg-primary-600 disabled:bg-primary-300;
+	}
+
+	.button--primary.button--outline {
+		@apply border-primary-500 bg-transparent text-primary-500 hover:bg-primary-50 hover:border-primary-600 hover:text-primary-600 dark:hover:bg-primary-950;
+	}
+
+	.button--primary.button--link {
+		@apply bg-transparent text-primary-500 hover:text-primary-600;
 	}
 
 	.button--secondary {
-		@apply bg-primary-50 text-primary-500 hover:bg-primary-100 hover:text-primary-600 focus:bg-primary-200 focus:text-primary-700 disabled:border-primary-300 disabled:bg-primary-100 disabled:text-primary-400 [&.button--elevated]:shadow-primary-500/30 [&.button--elevated]:hover:shadow-primary-500/30 [&.button--elevated]:focus:shadow-primary-500/30 [&.button--link]:bg-transparent [&.button--link]:text-primary-500 hover:[&.button--link]:text-primary-600 focus:[&.button--link]:text-primary-600 [&.button--link_svg]:stroke-primary-500 [&.button--outline]:border-primary-500 [&.button--outline]:bg-transparent [&.button--outline]:text-primary-500 [&.button--outline]:hover:border-primary-600 [&.button--outline]:hover:text-primary-600 [&_svg]:stroke-primary-500;
+		@apply bg-neutral-900 text-white hover:bg-neutral-800 focus:bg-neutral-800 disabled:bg-neutral-300 dark:bg-neutral-50 dark:text-neutral-900 dark:hover:bg-neutral-200;
 	}
 
 	.button--neutral {
-		@apply bg-neutral-700 text-white hover:bg-neutral-800 focus:bg-neutral-900 disabled:border-neutral-300 disabled:bg-neutral-300 [&.button--elevated]:shadow-neutral-500/30 [&.button--elevated]:hover:shadow-neutral-500/30 [&.button--elevated]:focus:shadow-neutral-500/30 [&.button--link]:bg-transparent [&.button--link]:text-neutral-700 hover:[&.button--link]:text-neutral-800 focus:[&.button--link]:text-neutral-900 [&.button--outline]:border-neutral-700 [&.button--outline]:bg-transparent [&.button--outline]:text-neutral-700 [&.button--outline]:hover:border-neutral-800 [&.button--outline]:hover:text-neutral-800;
+		@apply bg-neutral-100 text-neutral-900 hover:bg-neutral-200 focus:bg-neutral-200 disabled:bg-neutral-50 dark:bg-neutral-800 dark:text-neutral-50 dark:hover:bg-neutral-700;
+	}
+	
+	.button--danger {
+		@apply bg-red-500 text-white hover:bg-red-600 focus:bg-red-600 disabled:bg-red-300;
+	}
+	
+	.button--ghost {
+		@apply bg-transparent text-neutral-700 hover:bg-neutral-100 focus:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800 dark:focus:bg-neutral-800;
 	}
 </style>

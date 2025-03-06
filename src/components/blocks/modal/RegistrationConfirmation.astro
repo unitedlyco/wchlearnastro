@@ -1,0 +1,30 @@
+---
+// Registration Confirmation Modal
+// ------------
+// Description: A modal that appears after user registration to inform them about email verification.
+
+// Components
+// - UI
+import Modal from '../../ui/Modal.astro'
+import Button from '../../ui/Button.astro'
+
+// Props
+type Props = {
+	classes?: string
+}
+const { classes } = Astro.props
+---
+
+<Modal id="registration-confirmation" classes={classes} title="Registration Successful">
+	<div class="text-center">
+		<p class="mb-6">Thank you for registering! We have sent you a confirmation email.</p>
+		<p class="mb-6">Please check your inbox and click the verification link to complete your registration.</p>
+		<Button style="primary" type="button" classes="w-full" size="lg">Close</Button>
+	</div>
+</Modal>
+
+<style>
+	p {
+		@apply text-neutral-600 dark:text-neutral-300;
+	}
+</style> 

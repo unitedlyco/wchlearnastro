@@ -1,0 +1,291 @@
+---
+// Settings Page
+// ------------
+// Description: A page for users to manage their account settings.
+
+// Force server-side rendering
+export const prerender = false;
+
+// Components
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+import Button from '../../components/ui/Button.astro';
+import { Icon } from 'astro-icon/components';
+import Toast from '../../components/ui/Toast.astro';
+
+// Helper function for server-side logging
+function logToTerminal(message: string, data?: any) {
+  const timestamp = new Date().toISOString();
+  console.log('\x1b[34m%s\x1b[0m', `[${timestamp}] ⚙️ Settings: ${message}`);
+  if (data) {
+    console.log('\x1b[33m%s\x1b[0m', JSON.stringify(data, null, 2));
+  }
+}
+
+// Get user from locals (set by middleware)
+const { user, session, displayName } = Astro.locals;
+
+// Log authentication state
+logToTerminal('Authentication state', {
+  hasUser: !!user,
+  hasSession: !!session,
+  userId: user?.id,
+  email: user?.email,
+  displayName
+});
+
+// Redirect if not authenticated (backup to middleware)
+if (!user || !session?.access_token) {
+  logToTerminal('No authenticated user, redirecting to signin');
+  return Astro.redirect('/signin');
+}
+
+// Page Metadata
+const title = 'Settings | Learn';
+const description = 'Manage your account settings and preferences.';
+---
+
+<DashboardLayout title={title} description={description} activeMenuItem="settings">
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
+    </div>
+
+    <!-- Appearance Settings -->
+    <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Appearance</h2>
+      
+      <div class="space-y-4">
+        <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div>
+            <h3 class="font-medium text-gray-900 dark:text-white">Dark Mode</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Toggle between light and dark mode</p>
+          </div>
+          <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
+            <input 
+              type="checkbox" 
+              id="dark-mode-toggle" 
+              class="absolute w-6 h-6 opacity-0 cursor-pointer"
+            />
+            <label 
+              for="dark-mode-toggle" 
+              class="block h-6 overflow-hidden rounded-full bg-gray-300 dark:bg-gray-600 cursor-pointer"
+            >
+              <span 
+                class="absolute block w-6 h-6 rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out dark:translate-x-6"
+              ></span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div>
+            <h3 class="font-medium text-gray-900 dark:text-white">Font Size</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Adjust the text size for better readability</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="decrease-font" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+              <Icon name="mdi:minus" class="w-4 h-4" />
+            </button>
+            <span id="font-size-value" class="text-sm font-medium text-gray-700 dark:text-gray-300 w-8 text-center">100%</span>
+            <button id="increase-font" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+              <Icon name="mdi:plus" class="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Notification Settings -->
+    <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Notifications</h2>
+      
+      <div class="space-y-4">
+        <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div>
+            <h3 class="font-medium text-gray-900 dark:text-white">Email Notifications</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Receive course updates and announcements</p>
+          </div>
+          <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
+            <input 
+              type="checkbox" 
+              id="email-notifications-toggle" 
+              class="absolute w-6 h-6 opacity-0 cursor-pointer"
+              checked
+            />
+            <label 
+              for="email-notifications-toggle" 
+              class="block h-6 overflow-hidden rounded-full bg-primary-500 dark:bg-primary-600 cursor-pointer"
+            >
+              <span 
+                class="absolute block w-6 h-6 rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out translate-x-6"
+              ></span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div>
+            <h3 class="font-medium text-gray-900 dark:text-white">Browser Notifications</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Get notified in your browser</p>
+          </div>
+          <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
+            <input 
+              type="checkbox" 
+              id="browser-notifications-toggle" 
+              class="absolute w-6 h-6 opacity-0 cursor-pointer"
+            />
+            <label 
+              for="browser-notifications-toggle" 
+              class="block h-6 overflow-hidden rounded-full bg-gray-300 dark:bg-gray-600 cursor-pointer"
+            >
+              <span 
+                class="absolute block w-6 h-6 rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out"
+              ></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Privacy Settings -->
+    <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+      <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Privacy</h2>
+      
+      <div class="space-y-4">
+        <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div>
+            <h3 class="font-medium text-gray-900 dark:text-white">Data Collection</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Allow us to collect usage data to improve your experience</p>
+          </div>
+          <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full cursor-pointer">
+            <input 
+              type="checkbox" 
+              id="data-collection-toggle" 
+              class="absolute w-6 h-6 opacity-0 cursor-pointer"
+              checked
+            />
+            <label 
+              for="data-collection-toggle" 
+              class="block h-6 overflow-hidden rounded-full bg-primary-500 dark:bg-primary-600 cursor-pointer"
+            >
+              <span 
+                class="absolute block w-6 h-6 rounded-full bg-white shadow transform transition-transform duration-200 ease-in-out translate-x-6"
+              ></span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div>
+            <h3 class="font-medium text-gray-900 dark:text-white">Cookie Preferences</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Manage your cookie settings</p>
+          </div>
+          <Button style="secondary" size="sm" id="cookie-preferences-btn">
+            Manage
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast for notifications -->
+  <Toast id="settings-toast" />
+</DashboardLayout>
+
+<script>
+  // Dark mode toggle
+  const darkModeToggle = document.getElementById('dark-mode-toggle') as HTMLInputElement;
+  
+  // Check if dark mode is enabled
+  if (document.documentElement.classList.contains('dark')) {
+    darkModeToggle.checked = true;
+  }
+  
+  // Toggle dark mode
+  darkModeToggle?.addEventListener('change', () => {
+    if (darkModeToggle.checked) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  });
+  
+  // Font size adjustment
+  const decreaseFontBtn = document.getElementById('decrease-font');
+  const increaseFontBtn = document.getElementById('increase-font');
+  const fontSizeValue = document.getElementById('font-size-value');
+  
+  // Get current font size from localStorage or set default
+  let currentFontSize = parseInt(localStorage.getItem('fontSize') || '100');
+  
+  // Update font size display
+  if (fontSizeValue) {
+    fontSizeValue.textContent = `${currentFontSize}%`;
+  }
+  
+  // Decrease font size
+  decreaseFontBtn?.addEventListener('click', () => {
+    if (currentFontSize > 80) {
+      currentFontSize -= 10;
+      updateFontSize();
+    }
+  });
+  
+  // Increase font size
+  increaseFontBtn?.addEventListener('click', () => {
+    if (currentFontSize < 120) {
+      currentFontSize += 10;
+      updateFontSize();
+    }
+  });
+  
+  // Update font size
+  function updateFontSize() {
+    document.documentElement.style.fontSize = `${currentFontSize}%`;
+    localStorage.setItem('fontSize', currentFontSize.toString());
+    
+    if (fontSizeValue) {
+      fontSizeValue.textContent = `${currentFontSize}%`;
+    }
+  }
+  
+  // Toggle settings
+  const toggles = [
+    'email-notifications-toggle',
+    'browser-notifications-toggle',
+    'data-collection-toggle'
+  ];
+  
+  toggles.forEach(id => {
+    const toggle = document.getElementById(id) as HTMLInputElement;
+    
+    toggle?.addEventListener('change', () => {
+      const settingsToast = document.getElementById('settings-toast');
+      
+      if (settingsToast) {
+        window.showToast?.({
+          type: 'success',
+          title: 'Settings Updated',
+          message: 'Your preferences have been saved',
+          duration: 3000
+        });
+      }
+    });
+  });
+  
+  // Cookie preferences button
+  document.getElementById('cookie-preferences-btn')?.addEventListener('click', () => {
+    const settingsToast = document.getElementById('settings-toast');
+    
+    if (settingsToast) {
+      window.showToast?.({
+        type: 'info',
+        title: 'Coming Soon',
+        message: 'Cookie preferences management will be available soon',
+        duration: 5000
+      });
+    }
+  });
+</script> 

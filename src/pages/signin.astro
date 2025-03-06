@@ -1,0 +1,312 @@
+---
+// Sign In Page
+// ------------
+// Description: A page for users to sign in to their account.
+
+export const prerender = false;
+
+// Components
+import Layout from '../layouts/Layout.astro';
+import Form from '../components/ui/forms/Form.astro';
+import FormField from '../components/ui/forms/partials/FormField.astro';
+import InputField from '../components/ui/forms/form-elements/InputField.astro';
+import Button from '../components/ui/Button.astro';
+import { Icon } from 'astro-icon/components';
+
+// Helper function for server-side logging
+function logToTerminal(message: string, data?: any) {
+  const timestamp = new Date().toISOString();
+  console.log('\x1b[35m%s\x1b[0m', `[${timestamp}] 🔑 Signin: ${message}`);
+  if (data) {
+    console.log('\x1b[33m%s\x1b[0m', JSON.stringify(data, null, 2));
+  }
+}
+
+// Check if we were redirected here
+const url = new URL(Astro.request.url);
+const from = url.searchParams.get('from');
+
+if (from) {
+  logToTerminal('Redirected from protected route', { from });
+}
+
+// Check if user is already authenticated
+const { session } = Astro.locals;
+if (session?.access_token) {
+  logToTerminal('User already authenticated, redirecting to dashboard', {
+    userId: session.user.id,
+    email: session.user.email
+  });
+  return Astro.redirect('/dashboard');
+}
+
+// Page Metadata
+const title = 'Sign In | Learn';
+const description = 'Sign in to your Learn account to access your dashboard and courses.';
+---
+
+<Layout title={title} description={description}>
+  <section class="py-16 md:py-24">
+    <div class="container mx-auto px-6">
+      <div class="mx-auto max-w-md">
+        <div class="mb-8 text-center">
+          <h1 class="mb-2 text-3xl font-bold">Sign In</h1>
+          <p class="text-neutral-500 dark:text-neutral-400">Welcome back! Sign in to your account.</p>
+        </div>
+        
+        <div class="rounded-lg border border-neutral-200 bg-white p-8 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+          <Form>
+            <div id="signin-form">
+              <FormField>
+                <InputField type="email" id="signin-email" label="Email Address" required />
+              </FormField>
+              <FormField>
+                <InputField type="password" id="signin-password" label="Password" required />
+              </FormField>
+              
+              <div class="mb-6 flex items-center justify-between">
+                <div class="flex items-center">
+                  <input
+                    id="remember-me"
+                    name="remember-me"
+                    type="checkbox"
+                    class="h-4 w-4 rounded border-neutral-300 text-primary-500 focus:ring-primary-500 dark:border-neutral-700"
+                  />
+                  <label for="remember-me" class="ml-2 block text-sm text-neutral-700 dark:text-neutral-300">
+                    Remember me
+                  </label>
+                </div>
+                <div class="text-sm">
+                  <a href="#" class="text-primary-500 hover:text-primary-600">Forgot your password?</a>
+                </div>
+              </div>
+              
+              <Button style="primary" type="submit" classes="w-full" size="lg">
+                <span class="inline-flex items-center">
+                  <span id="signin-btn-text">Sign In</span>
+                  <span id="signin-btn-loading" class="hidden ml-2">
+                    <Icon name="arrow-path-rounded-square" class="h-5 w-5 animate-spin" />
+                  </span>
+                </span>
+              </Button>
+              
+              <div class="mt-6 text-center text-sm">
+                <p class="text-neutral-600 dark:text-neutral-400">
+                  Don't have an account?
+                  <a href="/signup" class="font-medium text-primary-500 hover:text-primary-600">Sign up</a>
+                </p>
+              </div>
+            </div>
+          </Form>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<script>
+  import { supabase } from '../lib/supabase';
+  
+  // Get the form elements
+  const form = document.getElementById('signin-form') as HTMLDivElement;
+  const submitButton = form?.querySelector('button[type="submit"]') as HTMLButtonElement;
+  const btnText = document.getElementById('signin-btn-text');
+  const btnLoading = document.getElementById('signin-btn-loading');
+  
+  // Add event listener for form submission
+  if (form) {
+    submitButton?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      
+      // Get form data
+      const emailInput = document.getElementById('signin-email') as HTMLInputElement;
+      const passwordInput = document.getElementById('signin-password') as HTMLInputElement;
+      
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      
+      // Basic validation
+      if (!email || !password) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      try {
+        // Show loading state
+        if (submitButton && btnText && btnLoading) {
+          submitButton.disabled = true;
+          btnText.textContent = 'Signing in...';
+          btnLoading.classList.remove('hidden');
+        }
+
+        console.log('Attempting to sign in...');
+        
+        // Sign in with email and password
+        const { data: { session }, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        // Log the attempt to the server
+        await fetch('/api/log', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            type: 'signin-attempt',
+            data: {
+              email,
+              hasError: !!error,
+              errorMessage: error?.message,
+              hasSession: !!session,
+              timestamp: new Date().toISOString()
+            }
+          })
+        });
+        
+        if (error) {
+          console.error('Detailed error:', error);
+          
+          // Handle specific error cases
+          if (error.message.includes('Email not confirmed')) {
+            alert('Please verify your email address before signing in. Check your inbox for the verification link.');
+          } else if (error.message.includes('Invalid login credentials')) {
+            alert('Invalid email or password. Please check your credentials and try again.');
+          } else if (error.message.includes('User not found')) {
+            alert('No account found with this email. Please sign up first.');
+          } else {
+            alert('Error signing in: ' + error.message);
+          }
+          
+          // Reset button state
+          if (submitButton && btnText && btnLoading) {
+            submitButton.disabled = false;
+            btnText.textContent = 'Sign In';
+            btnLoading.classList.add('hidden');
+          }
+          return;
+        }
+        
+        if (session) {
+          console.log('%c Login successful! ', 'background: #4CAF50; color: white; padding: 4px; border-radius: 4px;');
+          
+          // Log successful login to server
+          await fetch('/api/log', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              type: 'signin-success',
+              data: {
+                userId: session.user.id,
+                email: session.user.email,
+                timestamp: new Date().toISOString()
+              }
+            })
+          });
+
+          // Store session data
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('sb-access-token', session.access_token);
+            localStorage.setItem('sb-refresh-token', session.refresh_token);
+          }
+
+          // Set cookies with proper attributes
+          const cookieOptions = [
+            'path=/',
+            `max-age=${60 * 60 * 24 * 7}`, // 7 days
+            'SameSite=Lax'
+            // Removed HttpOnly as it prevents client-side access
+          ].join('; ');
+
+          document.cookie = `sb-access-token=${session.access_token}; ${cookieOptions}`;
+          document.cookie = `sb-refresh-token=${session.refresh_token}; ${cookieOptions}`;
+          
+          // Wait a moment for storage to be set
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Verify session was stored
+          const storedAccessToken = localStorage.getItem('sb-access-token');
+          const storedRefreshToken = localStorage.getItem('sb-refresh-token');
+          const cookieAccessToken = document.cookie.includes('sb-access-token');
+          const cookieRefreshToken = document.cookie.includes('sb-refresh-token');
+          
+          // Log storage status to server
+          await fetch('/api/log', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              type: 'storage-check',
+              data: {
+                localStorage: {
+                  accessToken: !!storedAccessToken,
+                  refreshToken: !!storedRefreshToken
+                },
+                cookies: {
+                  accessToken: cookieAccessToken,
+                  refreshToken: cookieRefreshToken
+                },
+                timestamp: new Date().toISOString()
+              }
+            })
+          });
+          
+          if (!storedAccessToken || !storedRefreshToken || !cookieAccessToken || !cookieRefreshToken) {
+            console.error('Session storage verification failed');
+            alert('Error establishing session. Please try again.');
+            
+            // Reset button state
+            if (submitButton && btnText && btnLoading) {
+              submitButton.disabled = false;
+              btnText.textContent = 'Sign In';
+              btnLoading.classList.add('hidden');
+            }
+            return;
+          }
+          
+          // Use server-side API to set cookies and redirect
+          try {
+            const response = await fetch('/api/auth/signin', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                session: {
+                  access_token: session.access_token,
+                  refresh_token: session.refresh_token
+                }
+              })
+            });
+            
+            if (response.ok) {
+              // The server will handle the redirect
+              window.location.href = '/dashboard';
+            } else {
+              // If the API call fails, try direct navigation
+              window.location.href = '/dashboard';
+            }
+          } catch (error) {
+            console.error('Error calling signin API:', error);
+            // Fallback to direct navigation
+            window.location.href = '/dashboard';
+          }
+        }
+      } catch (error) {
+        console.error('Unexpected error:', error);
+        alert('An unexpected error occurred. Please try again.');
+        
+        // Reset button state
+        if (submitButton && btnText && btnLoading) {
+          submitButton.disabled = false;
+          btnText.textContent = 'Sign In';
+          btnLoading.classList.add('hidden');
+        }
+      }
+    });
+  }
+</script> 

@@ -8,8 +8,7 @@ import vercel from "@astrojs/vercel";
 // https://astro.build/config
 export default defineConfig({
   site: "https://foxi.netlify.app/",
-  // Always use static output for this project since we're generating static pages
-  output: "static",
+  output: "server",
   // Only use Vercel adapter in production
   adapter: process.env.NODE_ENV === "production" ? vercel({
     analytics: true,
@@ -24,7 +23,11 @@ export default defineConfig({
   }) : undefined,
   integrations: [
     tailwind(),
-    icon(),
+    icon({
+      include: {
+        mdi: ["*"] // Include all icons from the MDI icon set
+      }
+    }),
     sitemap(),
     partytown({
       config: {
