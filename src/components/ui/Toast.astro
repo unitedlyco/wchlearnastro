@@ -20,16 +20,17 @@ const { id = 'toast-container' } = Astro.props;
   
   // Toast options
   interface ToastOptions {
+    type: ToastType;
     message: string;
-    type?: ToastType;
     duration?: number;
     title?: string;
+    icon?: string;
   }
 
   // Declare the global interface at the top
   declare global {
     interface Window {
-      showToast: (options: ToastOptions) => void;
+      showToast?: (options: ToastOptions) => void;
     }
   }
   
