@@ -144,12 +144,14 @@ const description = 'Your personal dashboard to manage your learning journey.';
   <script>
     // Show welcome toast
     window.addEventListener('DOMContentLoaded', () => {
-      window.showToast?.({
-        type: 'success',
-        title: 'Welcome back!',
-        message: `You're now signed in as ${document.querySelector('[data-user-email]')?.textContent || 'User'}`,
-        duration: 5000
-      });
+      if (typeof window.showToast === 'function') {
+        window.showToast({
+          type: 'success',
+          title: 'Welcome back!',
+          message: `You're now signed in as ${document.querySelector('[data-user-email]')?.textContent || 'User'}`,
+          duration: 5000
+        });
+      }
     });
   </script>
 </DashboardLayout>
@@ -165,12 +167,14 @@ const description = 'Your personal dashboard to manage your learning journey.';
         console.log('Signing out...');
         
         // Show signout toast
-        window.showToast({
-          type: 'info',
-          message: 'Signing you out...',
-          title: 'Sign Out',
-          duration: 2000
-        });
+        if (typeof window.showToast === 'function') {
+          window.showToast({
+            type: 'info',
+            message: 'Signing you out...',
+            title: 'Sign Out',
+            duration: 2000
+          });
+        }
         
         // Clear client-side storage first
         localStorage.removeItem('sb-access-token');
@@ -194,11 +198,13 @@ const description = 'Your personal dashboard to manage your learning journey.';
         if (!response.ok) {
           const data = await response.json();
           console.error('Error signing out:', data.error);
-          window.showToast({
-            type: 'error',
-            message: data.error,
-            title: 'Error Signing Out'
-          });
+          if (typeof window.showToast === 'function') {
+            window.showToast({
+              type: 'error',
+              message: data.error,
+              title: 'Error Signing Out'
+            });
+          }
           return;
         }
         
@@ -209,11 +215,13 @@ const description = 'Your personal dashboard to manage your learning journey.';
         }, 1000);
       } catch (error) {
         console.error('Unexpected error:', error);
-        window.showToast({
-          type: 'error',
-          message: 'An unexpected error occurred. Please try again.',
-          title: 'Error'
-        });
+        if (typeof window.showToast === 'function') {
+          window.showToast({
+            type: 'error',
+            message: 'An unexpected error occurred. Please try again.',
+            title: 'Error'
+          });
+        }
         
         // Fallback redirect
         setTimeout(() => {

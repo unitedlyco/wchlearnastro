@@ -52,11 +52,12 @@ const buttonClasses = [
 ---
 
 {
-	link ? (
+	variation === 'link' ? (
 		<a
-			href={link}
+			href={link || '#'}
 			class:list={buttonClasses}
 			{...(modal ? { 'data-modal': modal } : {})}
+			{...(id ? { id } : {})}
 		>
 			<slot />
 		</a>

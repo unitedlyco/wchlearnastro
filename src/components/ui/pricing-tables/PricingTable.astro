@@ -104,7 +104,7 @@ const { type, header, body, footer } = data
 				size="lg"
 				style={type === 'featured' ? 'secondary' : 'primary'}
 				elevated
-				type="link"
+				variation="link"
 				link={header.buttonLink}
 			>
 				{header.buttonName}
@@ -129,9 +129,8 @@ const { type, header, body, footer } = data
 					<Button
 						size="lg"
 						style="primary"
-						type="link"
-						link={footer.buttonLink}
 						variation="link"
+						link={footer.buttonLink}
 						classes={'!font-medium ' + (type === 'featured' ? '!text-white' : '')}
 					>
 						{footer.buttonName}
