@@ -11,6 +11,9 @@ import DashboardLayout from '../../layouts/DashboardLayout.astro';
 import Button from '../../components/ui/Button.astro';
 import { Icon } from 'astro-icon/components';
 import Toast from '../../components/ui/Toast.astro';
+import StatsCard from '../../components/dashboard/StatsCard.jsx';
+import RecentActivity from '../../components/dashboard/RecentActivity.jsx';
+import UpcomingSessions from '../../components/dashboard/UpcomingSessions.jsx';
 
 // Helper function for server-side logging
 function logToTerminal(message: string, data?: any) {
@@ -52,11 +55,11 @@ const description = 'Your personal dashboard to manage your learning journey.';
 ---
 
 <DashboardLayout title={title} activeMenuItem="dashboard">
-  <div class="space-y-6">
+  <div class="space-y-8">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
       <div class="flex items-center gap-2">
-        <Button style="primary" size="sm">
+        <Button style="primary" size="sm" id="refresh-btn">
           <Icon name="mdi:refresh" class="w-4 h-4 mr-1" />
           Refresh
         </Button>
@@ -64,97 +67,31 @@ const description = 'Your personal dashboard to manage your learning journey.';
     </div>
 
     <!-- Dashboard content -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Stats Card -->
-      <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center gap-4">
-          <div class="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-            <Icon name="mdi:book-open-page-variant" class="w-6 h-6 text-primary-600 dark:text-primary-400" />
-          </div>
-          <div>
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Course Progress</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Track your learning journey</p>
-          </div>
-        </div>
-        <div class="mt-4">
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Overall Progress</span>
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">25%</span>
-          </div>
-          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-            <div class="bg-primary-600 h-2.5 rounded-full" style="width: 25%"></div>
-          </div>
-        </div>
+    <div class="grid grid-cols-1 gap-8">
+      <!-- Top row -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- Stats Card - Interactive Island -->
+        <StatsCard client:load userId={user.id} />
+
+        <!-- Upcoming Sessions - Interactive Island -->
+        <UpcomingSessions client:visible userId={user.id} />
       </div>
 
-      <!-- Upcoming Card -->
-      <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center gap-4">
-          <div class="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-            <Icon name="mdi:calendar-clock" class="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-          </div>
-          <div>
-            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Upcoming Sessions</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Your scheduled learning</p>
-          </div>
-        </div>
-        <div class="mt-4 space-y-3">
-          <div class="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div>
-              <h4 class="font-medium text-gray-900 dark:text-white">Introduction to Nutrition</h4>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Tomorrow, 10:00 AM</p>
-            </div>
-            <Button style="neutral" size="xs">View</Button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Recent Activity -->
-    <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Recent Activity</h3>
-      <div class="space-y-4">
-        <div class="flex items-start gap-4">
-          <div class="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-            <Icon name="mdi:check-circle" class="w-5 h-5 text-green-600 dark:text-green-400" />
-          </div>
-          <div>
-            <h4 class="font-medium text-gray-900 dark:text-white">Completed Module 1</h4>
-            <p class="text-sm text-gray-500 dark:text-gray-400">You've completed the first module of Nutrition Basics</p>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">2 days ago</p>
-          </div>
-        </div>
-        <div class="flex items-start gap-4">
-          <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-            <Icon name="mdi:account-plus" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div>
-            <h4 class="font-medium text-gray-900 dark:text-white">Joined the Platform</h4>
-            <p class="text-sm text-gray-500 dark:text-gray-400">Welcome to your learning journey!</p>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">1 week ago</p>
-          </div>
-        </div>
-      </div>
+      <!-- Recent Activity - Interactive Island -->
+      <RecentActivity client:visible userId={user.id} />
     </div>
   </div>
 
   <!-- Toast notification for successful login -->
   <Toast id="login-success" />
-
-  <script>
-    // Show welcome toast
-    window.addEventListener('DOMContentLoaded', () => {
-      if (typeof window.showToast === 'function') {
-        window.showToast({
-          type: 'success',
-          title: 'Welcome back!',
-          message: `You're now signed in as ${document.querySelector('[data-user-email]')?.textContent || 'User'}`,
-          duration: 5000
-        });
-      }
-    });
-  </script>
 </DashboardLayout>
+
+<script>
+  // Minimal client-side JavaScript for the refresh button
+  document.getElementById('refresh-btn')?.addEventListener('click', () => {
+    window.location.reload();
+  });
+</script>
 
 <script>
   // Handle logout
