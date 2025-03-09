@@ -227,37 +227,54 @@ const description = course.description;
           <div class="mb-6">
             <h2 class="text-lg font-bold mb-3 text-gray-900 dark:text-white">About this Course</h2>
             <div class="prose dark:prose-invert max-w-none text-sm">
-              {course.content}
+              <div set:html={course.content} />
             </div>
           </div>
         </div>
         
         <!-- Course Modules Accordion -->
         <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
-          <h2 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">Course Content</h2>
+          <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Course Content</h2>
           
           {course.modules && course.modules.length > 0 ? (
-            <div class="space-y-3">
+            <div class="space-y-1">
               {course.modules.map((module, index) => (
-                <details class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                  <summary class="bg-gray-50 dark:bg-gray-700 p-4 flex items-center justify-between cursor-pointer">
-                    <h3 class="font-medium text-gray-900 dark:text-white">
-                      Module {index + 1}: {module.title}
-                    </h3>
-                    <span class="text-sm text-gray-500 dark:text-gray-400">
-                      {module.lessons.length} {module.lessons.length === 1 ? 'lesson' : 'lessons'}
-                    </span>
+                <details class="group border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+                  <summary class="bg-white dark:bg-gray-800 px-6 py-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <div class="leading-none">
+                      <h3 class="font-semibold text-gray-900 dark:text-white text-lg leading-none mb-0.5">
+                        {module.title}
+                      </h3>
+                      <p class="text-sm text-gray-500 dark:text-gray-400">
+                        {module.lessons.length} {module.lessons.length === 1 ? 'lesson' : 'lessons'}
+                      </p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <Icon 
+                        name="mdi:chevron-down" 
+                        class="w-5 h-5 text-gray-400 transform transition-transform group-open:rotate-180" 
+                      />
+                    </div>
                   </summary>
                   
-                  <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                  <div class="divide-y divide-gray-100 dark:divide-gray-700/50 bg-gray-50 dark:bg-gray-800/50">
                     {module.lessons.map((lesson, lessonIndex) => (
-                      <div class="p-4 flex items-center justify-between">
-                        <div class="flex items-center">
-                          <span class="w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-600 text-xs mr-3">
-                            {lessonIndex + 1}
-                          </span>
-                          <div>
-                            <h4 class="text-sm font-medium text-gray-900 dark:text-white">{lesson.title}</h4>
+                      <div 
+                        class={`px-6 py-2.5 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700/30 transition-colors ${lesson.is_free || isEnrolled ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                        data-lesson-id={lesson.id}
+                        data-lesson-title={lesson.title}
+                        data-lesson-content={lesson.content}
+                        data-video-url={lesson.video_url || "https://iframe.mediadelivery.net/play/330679/bcf7d9f9-bc66-49ae-8507-bc2e8369e97c"}
+                      >
+                        <div class="flex items-center gap-3">
+                          <div class="flex-shrink-0">
+                            <Icon 
+                              name="mdi:play-circle-outline" 
+                              class="w-5 h-5 text-gray-400 dark:text-gray-500" 
+                            />
+                          </div>
+                          <div class="leading-none">
+                            <h4 class="text-sm font-medium text-gray-900 dark:text-white leading-none mb-0.5">{lesson.title}</h4>
                             <p class="text-xs text-gray-500 dark:text-gray-400">{lesson.duration}</p>
                           </div>
                         </div>
@@ -265,18 +282,13 @@ const description = course.description;
                         {lesson.is_free || isEnrolled ? (
                           <button 
                             type="button"
-                            class="lesson-select-btn inline-flex items-center px-2.5 py-1.5 border border-primary-300 text-xs font-medium rounded text-primary-700 bg-primary-50 hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                            data-lesson-id={lesson.id}
-                            data-lesson-title={lesson.title}
-                            data-lesson-content={lesson.content}
-                            data-video-url={lesson.video_url || "https://iframe.mediadelivery.net/play/330679/bcf7d9f9-bc66-49ae-8507-bc2e8369e97c"}
+                            class="lesson-select-btn inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full text-primary-700 bg-primary-50 hover:bg-primary-100 dark:bg-primary-900/20 dark:text-primary-300 dark:hover:bg-primary-900/30 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                           >
-                            <Icon name="mdi:play-circle" class="w-4 h-4 mr-1" />
-                            {lesson.video_url ? 'Watch' : 'Read'}
+                            Start
                           </button>
                         ) : (
-                          <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center">
-                            <Icon name="mdi:lock" class="w-4 h-4 mr-1" />
+                          <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5 px-3 py-1.5">
+                            <Icon name="mdi:lock" class="w-4 h-4" />
                             Premium
                           </span>
                         )}
@@ -317,16 +329,48 @@ const description = course.description;
           document.addEventListener('DOMContentLoaded', () => {
             const videoPlayer = document.getElementById('video-player') as HTMLIFrameElement;
             
-            // Update video source when lesson is selected
+            // Function to handle lesson selection
+            function handleLessonSelect(element: HTMLElement) {
+              const videoUrl = element.getAttribute('data-video-url');
+              if (videoUrl && videoPlayer) {
+                // Add the embed parameters to the video URL
+                const embedUrl = videoUrl.replace('/play/', '/embed/') + '?autoplay=false&loop=false&muted=false&preload=true&responsive=true';
+                videoPlayer.src = embedUrl;
+              }
+              
+              // Update lesson title and content
+              const lessonTitle = element.getAttribute('data-lesson-title');
+              const lessonContent = element.getAttribute('data-lesson-content');
+              
+              if (lessonTitle) {
+                const titleElement = document.getElementById('lesson-title');
+                if (titleElement) titleElement.textContent = lessonTitle;
+              }
+              
+              if (lessonContent) {
+                const contentElement = document.getElementById('lesson-content');
+                if (contentElement) contentElement.innerHTML = lessonContent;
+              }
+            }
+            
+            // Add click handlers to lesson cards
+            const lessonCards = document.querySelectorAll('[data-lesson-id]');
+            lessonCards.forEach(card => {
+              if (card.classList.contains('cursor-pointer')) {
+                card.addEventListener('click', (e) => {
+                  // Don't trigger if clicking the Start button
+                  if (!(e.target as HTMLElement).closest('.lesson-select-btn')) {
+                    handleLessonSelect(card as HTMLElement);
+                  }
+                });
+              }
+            });
+            
+            // Keep existing Start button functionality
             const lessonButtons = document.querySelectorAll('.lesson-select-btn');
             lessonButtons.forEach(button => {
               button.addEventListener('click', () => {
-                const videoUrl = button.getAttribute('data-video-url');
-                if (videoUrl && videoPlayer) {
-                  // Add the embed parameters to the video URL
-                  const embedUrl = videoUrl.replace('/play/', '/embed/') + '?autoplay=false&loop=false&muted=false&preload=true&responsive=true';
-                  videoPlayer.src = embedUrl;
-                }
+                handleLessonSelect(button.closest('[data-lesson-id]') as HTMLElement);
               });
             });
           });
