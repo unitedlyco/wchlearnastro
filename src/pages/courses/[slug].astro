@@ -1,0 +1,488 @@
+---
+// Single Course Page
+// ------------
+// Description: A page for viewing a single course.
+
+// Force server-side rendering
+export const prerender = false;
+
+// Components
+import Layout from '../../layouts/Layout.astro';
+import { Icon } from 'astro-icon/components';
+import Button from '../../components/ui/Button.astro';
+import Toast from '../../components/ui/Toast.astro';
+
+// Services
+import { getCourseBySlug, enrollUserInCourse } from '../../lib/courses';
+import { supabase } from '../../lib/supabase';
+import type { Course } from '../../types/courses';
+
+// Helper function for server-side logging
+function logToTerminal(message: string, data?: any) {
+  const timestamp = new Date().toISOString();
+  console.log('\x1b[34m%s\x1b[0m', `[${timestamp}] 📚 Course: ${message}`);
+  if (data) {
+    console.log('\x1b[33m%s\x1b[0m', JSON.stringify(data, null, 2));
+  }
+}
+
+// Get user from locals (set by middleware)
+const { user, session } = Astro.locals;
+
+// Get course slug from URL
+const { slug } = Astro.params;
+
+if (!slug) {
+  return Astro.redirect('/courses');
+}
+
+// Fetch course data
+const course = await getCourseBySlug(slug);
+
+if (!course) {
+  return Astro.redirect('/courses');
+}
+
+// Check if user is enrolled in this course
+let isEnrolled = false;
+let userProgress = null;
+
+if (user) {
+  const { data } = await supabase
+    .from('user_course_progress')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('course_id', course.id)
+    .single();
+  
+  isEnrolled = !!data;
+  userProgress = data;
+}
+
+// Handle enrollment
+let enrollmentSuccess = false;
+let enrollmentError = null;
+
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    const action = formData.get('action');
+    
+    if (action === 'enroll' && user) {
+      const success = await enrollUserInCourse(user.id, course.id);
+      
+      if (success) {
+        enrollmentSuccess = true;
+        isEnrolled = true;
+      } else {
+        enrollmentError = 'Failed to enroll in the course. Please try again.';
+      }
+    }
+  } catch (error) {
+    console.error('Error processing enrollment:', error);
+    enrollmentError = 'An unexpected error occurred. Please try again.';
+  }
+}
+
+// Format price
+const formattedPrice = course.is_free 
+  ? 'Free' 
+  : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(course.price);
+
+// Page Metadata
+const title = `${course.title} | Learn`;
+const description = course.description;
+---
+
+<Layout title={title} description={description}>
+  <div class="container mx-auto px-4 py-8">
+    <Toast id="toast-container" />
+    
+    {/* Client-side script to show toast notifications */}
+    {enrollmentSuccess && (
+      <script>
+        window.addEventListener('DOMContentLoaded', () => {
+          window.showToast?.({
+            type: 'success',
+            title: 'Enrollment Successful',
+            message: 'You have successfully enrolled in this course.'
+          });
+        });
+      </script>
+    )}
+    
+    {enrollmentError && (
+      <script define:vars={{ message: enrollmentError }}>
+        window.addEventListener('DOMContentLoaded', () => {
+          window.showToast?.({
+            type: 'error',
+            title: 'Enrollment Failed',
+            message
+          });
+        });
+      </script>
+    )}
+    
+    <!-- Two Column Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left Column (1/3) -->
+      <div class="lg:col-span-1 space-y-6">
+        <!-- Featured Image -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+          <div class="aspect-video bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
+            {course.image ? (
+              <img 
+                src={course.image} 
+                alt={course.title} 
+                class="w-full h-full object-cover"
+              />
+            ) : (
+              <div class="w-full h-full flex items-center justify-center">
+                <Icon name="mdi:book-open-page-variant" class="w-24 h-24 text-gray-400 dark:text-gray-500" />
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <!-- Course Info -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+          <h1 class="text-2xl font-bold mb-2 text-gray-900 dark:text-white">{course.title}</h1>
+          <p class="text-gray-600 dark:text-gray-300 mb-4">{course.description}</p>
+          
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span class={`
+              text-xs font-medium px-2 py-1 rounded-full
+              ${course.level === 'beginner' ? 'bg-green-100 text-green-800' : ''}
+              ${course.level === 'intermediate' ? 'bg-blue-100 text-blue-800' : ''}
+              ${course.level === 'advanced' ? 'bg-purple-100 text-purple-800' : ''}
+            `}>
+              {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
+            </span>
+            
+            <span class={`
+              text-xs font-medium px-2 py-1 rounded-full
+              ${course.is_free ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+            `}>
+              {formattedPrice}
+            </span>
+            
+            {course.categories.map((category: string) => (
+              <span class="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-800">
+                {category}
+              </span>
+            ))}
+          </div>
+          
+          <div class="flex items-center text-sm text-gray-600 dark:text-gray-300 space-x-4 mb-4">
+            <div class="flex items-center">
+              <Icon name="mdi:clock-outline" class="w-4 h-4 mr-1" />
+              <span>{course.duration}</span>
+            </div>
+            <div class="flex items-center">
+              <Icon name="mdi:account" class="w-4 h-4 mr-1" />
+              <span>{course.instructor}</span>
+            </div>
+          </div>
+          
+          <!-- Enroll/Buy Button -->
+          <div class="mb-6">
+            {isEnrolled ? (
+              <div>
+                <Button link={`/courses/${course.slug}/learn`} style="primary" size="lg" classes="w-full">
+                  {userProgress && userProgress.progress_percentage > 0 ? 'Continue Learning' : 'Start Learning'}
+                </Button>
+              </div>
+            ) : (
+              <div>
+                {user ? (
+                  <form method="POST">
+                    <input type="hidden" name="action" value="enroll" />
+                    <Button type="submit" style="primary" size="lg" classes="w-full">
+                      {course.is_free ? 'Enroll for Free' : `Enroll for ${formattedPrice}`}
+                    </Button>
+                  </form>
+                ) : (
+                  <Button link="/signin?redirect=/courses/${course.slug}" style="primary" size="lg" classes="w-full">
+                    Sign in to Enroll
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <!-- Course Progress -->
+          {isEnrolled && userProgress && (
+            <div class="mb-6">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Course Progress</span>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{userProgress.progress_percentage}%</span>
+              </div>
+              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                <div class="bg-primary-600 h-2.5 rounded-full" style={`width: ${userProgress.progress_percentage}%`}></div>
+              </div>
+            </div>
+          )}
+          
+          <!-- About the Course -->
+          <div class="mb-6">
+            <h2 class="text-lg font-bold mb-3 text-gray-900 dark:text-white">About this Course</h2>
+            <div class="prose dark:prose-invert max-w-none text-sm">
+              {course.content}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Course Modules Accordion -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+          <h2 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">Course Content</h2>
+          
+          {course.modules && course.modules.length > 0 ? (
+            <div class="space-y-3">
+              {course.modules.map((module, index) => (
+                <details class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <summary class="bg-gray-50 dark:bg-gray-700 p-4 flex items-center justify-between cursor-pointer">
+                    <h3 class="font-medium text-gray-900 dark:text-white">
+                      Module {index + 1}: {module.title}
+                    </h3>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">
+                      {module.lessons.length} {module.lessons.length === 1 ? 'lesson' : 'lessons'}
+                    </span>
+                  </summary>
+                  
+                  <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                    {module.lessons.map((lesson, lessonIndex) => (
+                      <div class="p-4 flex items-center justify-between">
+                        <div class="flex items-center">
+                          <span class="w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-600 text-xs mr-3">
+                            {lessonIndex + 1}
+                          </span>
+                          <div>
+                            <h4 class="text-sm font-medium text-gray-900 dark:text-white">{lesson.title}</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{lesson.duration}</p>
+                          </div>
+                        </div>
+                        
+                        {lesson.is_free || isEnrolled ? (
+                          <button 
+                            type="button"
+                            class="lesson-select-btn inline-flex items-center px-2.5 py-1.5 border border-primary-300 text-xs font-medium rounded text-primary-700 bg-primary-50 hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                            data-lesson-id={lesson.id}
+                            data-lesson-title={lesson.title}
+                            data-lesson-content={lesson.content}
+                            data-video-url={lesson.video_url || "https://iframe.mediadelivery.net/play/330679/bcf7d9f9-bc66-49ae-8507-bc2e8369e97c"}
+                          >
+                            <Icon name="mdi:play-circle" class="w-4 h-4 mr-1" />
+                            {lesson.video_url ? 'Watch' : 'Read'}
+                          </button>
+                        ) : (
+                          <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                            <Icon name="mdi:lock" class="w-4 h-4 mr-1" />
+                            Premium
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              ))}
+            </div>
+          ) : (
+            <div class="text-center p-8">
+              <Icon name="mdi:book-outline" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Content Available</h3>
+              <p class="text-gray-500 dark:text-gray-400">Course content is being prepared.</p>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <!-- Right Column (2/3) -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Video Player -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+          <div style="position:relative;padding-top:56.25%;">
+            <iframe
+              id="video-player"
+              src="https://iframe.mediadelivery.net/embed/330679/bcf7d9f9-bc66-49ae-8507-bc2e8369e97c?autoplay=false&loop=false&muted=false&preload=true&responsive=true"
+              loading="lazy"
+              style="border:0;position:absolute;top:0;height:100%;width:100%;"
+              allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;"
+              allowfullscreen="true"
+            ></iframe>
+          </div>
+        </div>
+        
+        <!-- Client-side script to handle video player -->
+        <script>
+          document.addEventListener('DOMContentLoaded', () => {
+            const videoPlayer = document.getElementById('video-player') as HTMLIFrameElement;
+            
+            // Update video source when lesson is selected
+            const lessonButtons = document.querySelectorAll('.lesson-select-btn');
+            lessonButtons.forEach(button => {
+              button.addEventListener('click', () => {
+                const videoUrl = button.getAttribute('data-video-url');
+                if (videoUrl && videoPlayer) {
+                  // Add the embed parameters to the video URL
+                  const embedUrl = videoUrl.replace('/play/', '/embed/') + '?autoplay=false&loop=false&muted=false&preload=true&responsive=true';
+                  videoPlayer.src = embedUrl;
+                }
+              });
+            });
+          });
+        </script>
+        
+        <!-- Lesson Content -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+          <h2 id="lesson-title" class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Lesson Title</h2>
+          
+          <div id="lesson-content" class="prose dark:prose-invert max-w-none mb-8">
+            <p>Select a lesson from the course content to view its materials.</p>
+          </div>
+          
+          <!-- Lesson Notes -->
+          <div class="mb-8">
+            <h3 class="text-lg font-bold mb-3 text-gray-900 dark:text-white">Lesson Notes</h3>
+            <div class="prose dark:prose-invert max-w-none">
+              <p>Lesson notes will appear here.</p>
+            </div>
+          </div>
+          
+          <!-- User Notes -->
+          <div class="mb-6">
+            <h3 class="text-lg font-bold mb-3 text-gray-900 dark:text-white">Add Your Notes</h3>
+            <textarea 
+              id="user-notes"
+              class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              rows="4"
+              placeholder="Type your notes here..."
+              disabled={!isEnrolled}
+            ></textarea>
+            <div class="mt-2 flex justify-end">
+              <Button 
+                id="save-notes-btn"
+                style="primary" 
+                size="sm" 
+                disabled={!isEnrolled}
+              >
+                Save Notes
+              </Button>
+            </div>
+          </div>
+          
+          <!-- Mark as Complete -->
+          <div class="flex justify-end">
+            <Button 
+              id="mark-complete-btn"
+              style="primary" 
+              size="base" 
+              disabled={!isEnrolled}
+            >
+              <Icon name="mdi:check-circle" class="w-5 h-5 mr-2" />
+              Mark as Complete
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Script for handling user notes and lesson completion -->
+  <script define:vars={{ isEnrolled, userId: user?.id }}>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Only enable these features for enrolled users
+      if (!isEnrolled) return;
+      
+      const userNotesTextarea = document.getElementById('user-notes');
+      const saveNotesBtn = document.getElementById('save-notes-btn');
+      const markCompleteBtn = document.getElementById('mark-complete-btn');
+      const lessonButtons = document.querySelectorAll('.lesson-select-btn');
+      
+      // Store the current lesson ID
+      let currentLessonId = null;
+      
+      // Load notes from localStorage when a lesson is selected
+      function loadUserNotes(lessonId) {
+        if (!userNotesTextarea || !lessonId) return;
+        
+        currentLessonId = lessonId;
+        const storageKey = `user_notes_${userId}_${lessonId}`;
+        const savedNotes = localStorage.getItem(storageKey) || '';
+        userNotesTextarea.value = savedNotes;
+      }
+      
+      // Save notes to localStorage
+      function saveUserNotes() {
+        if (!userNotesTextarea || !currentLessonId) return;
+        
+        const notes = userNotesTextarea.value;
+        const storageKey = `user_notes_${userId}_${currentLessonId}`;
+        
+        localStorage.setItem(storageKey, notes);
+        
+        // Show success message
+        window.showToast?.({
+          type: 'success',
+          title: 'Notes Saved',
+          message: 'Your notes have been saved successfully.'
+        });
+      }
+      
+      // Mark lesson as complete
+      function markLessonComplete() {
+        if (!currentLessonId) return;
+        
+        // Store completion status in localStorage
+        const storageKey = `lesson_complete_${userId}_${currentLessonId}`;
+        localStorage.setItem(storageKey, 'true');
+        
+        // Show success message
+        window.showToast?.({
+          type: 'success',
+          title: 'Lesson Completed',
+          message: 'This lesson has been marked as complete.'
+        });
+        
+        // Update UI to show completion status
+        markCompleteBtn.textContent = 'Completed';
+        markCompleteBtn.disabled = true;
+        
+        // TODO: In a real implementation, you would send this to the server
+        // to update the user's progress in the database
+      }
+      
+      // Add event listeners
+      if (saveNotesBtn) {
+        saveNotesBtn.addEventListener('click', saveUserNotes);
+      }
+      
+      if (markCompleteBtn) {
+        markCompleteBtn.addEventListener('click', markLessonComplete);
+      }
+      
+      // Update lesson selection to load notes
+      lessonButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          const lessonId = button.getAttribute('data-lesson-id');
+          if (lessonId) {
+            loadUserNotes(lessonId);
+            
+            // Check if lesson is already completed
+            const storageKey = `lesson_complete_${userId}_${lessonId}`;
+            const isCompleted = localStorage.getItem(storageKey) === 'true';
+            
+            if (markCompleteBtn) {
+              if (isCompleted) {
+                markCompleteBtn.textContent = 'Completed';
+                markCompleteBtn.disabled = true;
+              } else {
+                markCompleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10s10-4.5 10-10S17.5 2 12 2m-1 15l-5-5l1.41-1.41L10 13.17l7.59-7.59L19 7l-8 8Z"/></svg>Mark as Complete';
+                markCompleteBtn.disabled = false;
+              }
+            }
+          }
+        });
+      });
+    });
+  </script>
+</Layout> 

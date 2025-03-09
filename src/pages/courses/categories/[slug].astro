@@ -1,0 +1,157 @@
+---
+// Category Courses Page
+// ------------
+// Description: A page for browsing courses in a specific category.
+
+// Force server-side rendering
+export const prerender = false;
+
+// Components
+import Layout from '../../../layouts/Layout.astro';
+import { Icon } from 'astro-icon/components';
+import Button from '../../../components/ui/Button.astro';
+
+// Services
+import { getCoursesByCategory, getAllCategories } from '../../../lib/courses';
+import type { Course, CourseCategory } from '../../../types/courses';
+
+// Helper function for server-side logging
+function logToTerminal(message: string, data?: any) {
+  const timestamp = new Date().toISOString();
+  console.log('\x1b[34m%s\x1b[0m', `[${timestamp}] 📚 Category: ${message}`);
+  if (data) {
+    console.log('\x1b[33m%s\x1b[0m', JSON.stringify(data, null, 2));
+  }
+}
+
+// Get category slug from URL
+const { slug } = Astro.params;
+
+logToTerminal(`Processing category page for slug: ${slug}`);
+
+if (!slug) {
+  logToTerminal(`No slug provided, redirecting to categories page`);
+  return Astro.redirect('/courses/categories');
+}
+
+// Fetch all categories to find the current one
+const allCategories = await getAllCategories();
+logToTerminal(`Fetched ${allCategories.length} categories`, allCategories);
+
+const currentCategory = allCategories.find(cat => cat.slug === slug);
+
+if (!currentCategory) {
+  logToTerminal(`Category not found for slug: ${slug}, redirecting to categories page`);
+  return Astro.redirect('/courses/categories');
+}
+
+logToTerminal(`Found category: ${currentCategory.name} (${currentCategory.id})`);
+
+// Fetch courses for this category
+const courses = await getCoursesByCategory(slug);
+logToTerminal(`Fetched ${courses.length} courses for category: ${currentCategory.name}`, courses);
+
+// Page Metadata
+const title = `${currentCategory.name} Courses | Learn`;
+const description = currentCategory.description || `Browse our collection of ${currentCategory.name} courses.`;
+---
+
+<Layout title={title} description={description}>
+  <div class="container mx-auto px-4 py-12">
+    <!-- Header -->
+    <div class="mb-12">
+      <div class="flex items-center mb-4">
+        <Button link="/courses/categories" style="primary" variation="outline" size="sm" classes="mr-4">
+          <Icon name="mdi:arrow-left" class="w-4 h-4 mr-1" />
+          All Categories
+        </Button>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{currentCategory.name} Courses</h1>
+      </div>
+      <p class="text-lg text-gray-600 dark:text-gray-400 max-w-3xl">
+        {currentCategory.description || `Explore our collection of ${currentCategory.name} courses designed to help you master this subject area.`}
+      </p>
+    </div>
+
+    <!-- Courses Grid -->
+    {courses.length > 0 ? (
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {courses.map((course: Course) => (
+          <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div class="aspect-video bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
+              {course.image ? (
+                <img 
+                  src={course.image} 
+                  alt={course.title} 
+                  class="w-full h-full object-cover"
+                />
+              ) : (
+                <div class="w-full h-full flex items-center justify-center">
+                  <Icon name="mdi:book-open-page-variant" class="w-12 h-12 text-gray-400 dark:text-gray-500" />
+                </div>
+              )}
+              
+              <!-- Level badge -->
+              <div class="absolute top-3 left-3">
+                <span class={`
+                  text-xs font-medium px-2 py-1 rounded-full
+                  ${course.level === 'beginner' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : ''}
+                  ${course.level === 'intermediate' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : ''}
+                  ${course.level === 'advanced' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' : ''}
+                `}>
+                  {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
+                </span>
+              </div>
+              
+              <!-- Price badge -->
+              <div class="absolute top-3 right-3">
+                <span class={`
+                  text-xs font-medium px-2 py-1 rounded-full
+                  ${course.is_free ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}
+                `}>
+                  {course.is_free ? 'Free' : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(course.price)}
+                </span>
+              </div>
+            </div>
+            
+            <div class="p-5">
+              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{course.title}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">{course.description}</p>
+              
+              <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-4 space-x-4">
+                <div class="flex items-center">
+                  <Icon name="mdi:clock-outline" class="w-4 h-4 mr-1" />
+                  <span>{course.duration}</span>
+                </div>
+                <div class="flex items-center">
+                  <Icon name="mdi:account" class="w-4 h-4 mr-1" />
+                  <span>{course.instructor}</span>
+                </div>
+              </div>
+              
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-500 dark:text-gray-400">
+                  {course.categories.length > 0 ? course.categories[0] : 'General'}
+                </span>
+                
+                <Button link={`/courses/${course.slug}`} style="primary" size="sm">View Course</Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div class="bg-gray-50 dark:bg-gray-800 p-8 rounded-xl text-center">
+        <Icon name="mdi:book-outline" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Courses Found</h3>
+        <p class="text-gray-500 dark:text-gray-400">
+          We don't have any courses in this category yet. Check back soon for new content.
+        </p>
+        <div class="mt-6">
+          <Button link="/courses" style="primary" size="base">
+            Browse All Courses
+          </Button>
+        </div>
+      </div>
+    )}
+  </div>
+</Layout> 

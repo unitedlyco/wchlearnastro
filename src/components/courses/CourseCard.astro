@@ -1,0 +1,113 @@
+---
+import { Icon } from 'astro-icon/components';
+import Button from '../ui/Button.astro';
+import type { Course } from '../../types/courses';
+
+interface Props {
+  course: Course;
+  showProgress?: boolean;
+  progress?: number;
+  lastAccessed?: string;
+  isEnrolled?: boolean;
+}
+
+const { 
+  course, 
+  showProgress = false, 
+  progress = 0, 
+  lastAccessed = '', 
+  isEnrolled = false 
+} = Astro.props;
+
+// Format price
+const formattedPrice = course.is_free 
+  ? 'Free' 
+  : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(course.price);
+---
+
+<div class="group bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all duration-300">
+  <div class="aspect-video bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
+    {course.image ? (
+      <img 
+        src={course.image} 
+        alt={course.title} 
+        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+      />
+    ) : (
+      <div class="w-full h-full flex items-center justify-center">
+        <Icon name="mdi:book-open-page-variant" class="w-12 h-12 text-gray-400 dark:text-gray-500" />
+      </div>
+    )}
+    
+    <!-- Overlay with category and price -->
+    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <div class="absolute bottom-4 left-4 right-4 flex justify-between items-center">
+        <span class="text-sm text-white font-medium">
+          {course.categories.length > 0 ? course.categories[0] : 'General'}
+        </span>
+        <span class="text-sm text-white font-medium">
+          {formattedPrice}
+        </span>
+      </div>
+    </div>
+    
+    <!-- Level badge -->
+    <div class="absolute top-3 left-3">
+      <span class={`
+        text-xs font-medium px-2 py-1 rounded-full bg-white/90 backdrop-blur-sm
+        ${course.level === 'beginner' ? 'text-green-700' : ''}
+        ${course.level === 'intermediate' ? 'text-blue-700' : ''}
+        ${course.level === 'advanced' ? 'text-purple-700' : ''}
+      `}>
+        {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
+      </span>
+    </div>
+  </div>
+  
+  <div class="p-5">
+    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2 group-hover:text-primary-500 transition-colors duration-300">
+      {course.title}
+    </h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+      {course.description}
+    </p>
+    
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+        <div class="flex items-center">
+          <Icon name="mdi:clock-outline" class="w-4 h-4 mr-1" />
+          <span>{course.duration}</span>
+        </div>
+        <div class="flex items-center">
+          <Icon name="mdi:account" class="w-4 h-4 mr-1" />
+          <span class="truncate max-w-[100px]">{course.instructor}</span>
+        </div>
+      </div>
+      
+      {showProgress ? (
+        <div class="w-24">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{progress}%</span>
+          </div>
+          <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+            <div class="bg-primary-500 h-1.5 rounded-full transition-all duration-300" style={`width: ${progress}%`}></div>
+          </div>
+        </div>
+      ) : (
+        <Button 
+          link={`/courses/${course.slug}`} 
+          style="primary" 
+          size="sm"
+        >
+          {isEnrolled ? 'Continue' : 'View Course'}
+        </Button>
+      )}
+    </div>
+    
+    {showProgress && lastAccessed && (
+      <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+        Last accessed: {lastAccessed}
+      </div>
+    )}
+  </div>
+</div> 

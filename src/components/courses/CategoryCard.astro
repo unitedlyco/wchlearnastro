@@ -1,0 +1,30 @@
+import { Icon } from 'astro-icon/components';
+import type { CourseCategory } from '../../types/courses';
+
+interface Props {
+  category: CourseCategory;
+}
+
+const { category } = Astro.props;
+
+<a href={`/courses/categories/${category.slug}`} class="block group">
+  <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm group-hover:shadow-md transition-shadow duration-200">
+    <div class="aspect-video bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
+      {category.image ? (
+        <img 
+          src={category.image} 
+          alt={category.name} 
+          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        />
+      ) : (
+        <div class="w-full h-full flex items-center justify-center">
+          <Icon name="mdi:folder-outline" class="w-12 h-12 text-gray-400 dark:text-gray-500 group-hover:scale-110 transition-transform duration-300" />
+        </div>
+      )}
+      <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+      <div class="absolute bottom-0 left-0 right-0 p-4">
+        <h3 class="text-lg font-medium text-white">{category.name}</h3>
+      </div>
+    </div>
+  </div>
+</a> 

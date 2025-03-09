@@ -1,0 +1,86 @@
+---
+// Course Categories Page
+// ------------
+// Description: A page for browsing all course categories.
+
+// Force server-side rendering
+export const prerender = false;
+
+// Components
+import Layout from '../../../layouts/Layout.astro';
+import { Icon } from 'astro-icon/components';
+import Button from '../../../components/ui/Button.astro';
+
+// Services
+import { getAllCategories } from '../../../lib/courses';
+import type { CourseCategory } from '../../../types/courses';
+
+// Helper function for server-side logging
+function logToTerminal(message: string, data?: any) {
+  const timestamp = new Date().toISOString();
+  console.log('\x1b[34m%s\x1b[0m', `[${timestamp}] 📚 Categories: ${message}`);
+  if (data) {
+    console.log('\x1b[33m%s\x1b[0m', JSON.stringify(data, null, 2));
+  }
+}
+
+// Fetch categories
+const categories = await getAllCategories();
+
+// Page Metadata
+const title = 'Course Categories | Learn';
+const description = 'Browse our course categories to find the perfect learning path for you.';
+---
+
+<Layout title={title} description={description}>
+  <div class="container mx-auto px-4 py-12">
+    <!-- Header -->
+    <div class="mb-12">
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Course Categories</h1>
+        <Button link="/courses" style="primary" variation="outline" size="sm">
+          <Icon name="mdi:arrow-left" class="w-4 h-4 mr-1" />
+          Back to Courses
+        </Button>
+      </div>
+      <p class="text-lg text-gray-600 dark:text-gray-400 max-w-3xl">
+        Explore our diverse range of course categories designed to help you achieve your learning goals.
+      </p>
+    </div>
+
+    <!-- Categories Grid -->
+    {categories.length > 0 ? (
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {categories.map((category: CourseCategory) => (
+          <a href={`/courses/categories/${category.slug}`} class="block group">
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm group-hover:shadow-md transition-shadow duration-200">
+              <div class="aspect-video bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
+                {category.image ? (
+                  <img 
+                    src={category.image} 
+                    alt={category.name} 
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div class="w-full h-full flex items-center justify-center">
+                    <Icon name="mdi:folder-outline" class="w-12 h-12 text-gray-400 dark:text-gray-500 group-hover:scale-110 transition-transform duration-300" />
+                  </div>
+                )}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 right-0 p-4">
+                  <h3 class="text-lg font-medium text-white">{category.name}</h3>
+                </div>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div class="bg-gray-50 dark:bg-gray-800 p-8 rounded-xl text-center">
+        <Icon name="mdi:folder-outline" class="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Categories Found</h3>
+        <p class="text-gray-500 dark:text-gray-400">Check back soon for new course categories.</p>
+      </div>
+    )}
+  </div>
+</Layout> 

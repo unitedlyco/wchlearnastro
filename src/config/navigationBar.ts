@@ -41,7 +41,7 @@ export const navigationBarData: NavData = {
 		{ name: 'Home', link: '/' },
 		{ name: 'Blog', link: '/blog' },
 		{ name: 'Substack', link: '/substack' },
-		{ name: 'Detox', link: '/detox-guide' },
+		{ name: 'Courses', link: '/courses' },
 		{
 			name: 'Resources',
 			link: '#',

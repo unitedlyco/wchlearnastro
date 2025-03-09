@@ -1,0 +1,146 @@
+-- Simple tables setup for courses with basic demo data
+-- Run this script in the Supabase SQL Editor
+
+-- Create extension if it doesn't exist
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Create course_categories table
+CREATE TABLE IF NOT EXISTS course_categories (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  description TEXT,
+  image TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create courses table
+CREATE TABLE IF NOT EXISTS courses (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  description TEXT NOT NULL,
+  content TEXT NOT NULL,
+  image TEXT,
+  instructor TEXT NOT NULL,
+  duration TEXT NOT NULL,
+  level TEXT NOT NULL,
+  price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+  is_free BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  categories TEXT[] DEFAULT '{}'
+);
+
+-- Create junction table
+CREATE TABLE IF NOT EXISTS course_categories_courses (
+  category_id UUID REFERENCES course_categories(id) ON DELETE CASCADE,
+  course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
+  PRIMARY KEY (category_id, course_id)
+);
+
+-- Create course_modules table
+CREATE TABLE IF NOT EXISTS course_modules (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  "order" INTEGER NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create course_lessons table
+CREATE TABLE IF NOT EXISTS course_lessons (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  module_id UUID NOT NULL REFERENCES course_modules(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  content TEXT NOT NULL,
+  video_url TEXT,
+  duration TEXT NOT NULL,
+  "order" INTEGER NOT NULL,
+  is_free BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create user_course_progress table
+CREATE TABLE IF NOT EXISTS user_course_progress (
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  course_id UUID NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+  progress_percentage INTEGER NOT NULL DEFAULT 0,
+  completed_lessons UUID[] NOT NULL DEFAULT '{}',
+  last_accessed TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  is_completed BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  PRIMARY KEY (user_id, course_id)
+);
+
+-- Enable RLS for all tables
+ALTER TABLE course_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE course_categories_courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE course_modules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE course_lessons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_course_progress ENABLE ROW LEVEL SECURITY;
+
+-- Create basic RLS policies
+CREATE POLICY "Allow public read access" ON course_categories FOR SELECT USING (true);
+CREATE POLICY "Allow public read access" ON courses FOR SELECT USING (true);
+CREATE POLICY "Allow public read access" ON course_categories_courses FOR SELECT USING (true);
+CREATE POLICY "Allow public read access" ON course_modules FOR SELECT USING (true);
+CREATE POLICY "Allow public read access" ON course_lessons FOR SELECT USING (true);
+
+-- User progress policies
+CREATE POLICY "Allow read access for own data" ON user_course_progress
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Allow insert access for own data" ON user_course_progress
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Allow update access for own data" ON user_course_progress
+  FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Allow delete access for own data" ON user_course_progress
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Insert basic demo data
+INSERT INTO course_categories (name, slug, description, image)
+VALUES
+('Nutrition', 'nutrition', 'Learn about nutrition principles', 'https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&q=80&w=1000'),
+('Wellness', 'wellness', 'Discover holistic approaches to health', 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=1000'),
+('Fitness', 'fitness', 'Physical training programs', 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=1000')
+ON CONFLICT (slug) DO NOTHING;
+
+-- Insert basic courses
+INSERT INTO courses (title, slug, description, content, image, instructor, duration, level, price, is_free, categories)
+VALUES
+(
+  'Nutrition Fundamentals', 
+  'nutrition-fundamentals', 
+  'Learn the basics of nutrition and healthy eating habits.', 
+  '<p>This course covers the essential principles of nutrition that everyone should know.</p>', 
+  'https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&q=80&w=1000', 
+  'Dr. Sarah Johnson', 
+  '4 weeks', 
+  'beginner', 
+  0, 
+  true, 
+  ARRAY['Nutrition', 'Wellness']
+),
+(
+  'Functional Fitness Basics', 
+  'functional-fitness-basics', 
+  'Build strength and mobility with functional movement patterns.', 
+  '<p>This course focuses on functional fitness exercises.</p>', 
+  'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=1000', 
+  'Alex Rodriguez', 
+  '5 weeks', 
+  'beginner', 
+  0, 
+  true, 
+  ARRAY['Fitness']
+)
+ON CONFLICT (slug) DO NOTHING;
+
+-- Connect courses to categories
+INSERT INTO course_categories_courses (category_id, course_id)
+SELECT c.id, co.id
+FROM course_categories c, courses co
+WHERE c.name = ANY(co.categories)
+ON CONFLICT DO NOTHING; 
