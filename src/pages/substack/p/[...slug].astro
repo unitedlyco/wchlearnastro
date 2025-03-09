@@ -37,7 +37,7 @@ export async function getStaticPaths() {
       const slug = urlParts[urlParts.length - 1];
       
       return {
-        params: { slug: [slug] }, // Wrap slug in array for [...slug] routing
+        params: { slug }, // Don't wrap slug in array
         props: { post }
       };
     });
@@ -64,7 +64,7 @@ const frontmatter = {
   author: post?.author || 'WCH Team',
   image: post?.featuredImage || '/placeholder-image.jpg',
   tags: ['Substack'],
-  id: slug?.[0] || 'not-found',
+  id: slug || 'not-found', // Don't try to access array index
   originalLink: post?.link
 };
 
