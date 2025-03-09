@@ -2,7 +2,7 @@
 import defaultTheme from "tailwindcss/defaultTheme";
 export default {
   content: ["./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}"],
-  darkMode: ["selector"],
+  darkMode: "class",
   safelist: [
     {
       pattern: /col-span-(\d+)/,

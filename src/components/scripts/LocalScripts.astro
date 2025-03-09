@@ -107,28 +107,16 @@
 <!-- Light/Dark mode  -->
 <script>
 	const applyTheme = () => {
-		if (
-			localStorage.theme === 'dark' ||
-			(!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
-		) {
-			document.documentElement.classList.add('dark')
-		} else {
-			document.documentElement.classList.remove('dark')
-		}
+		// Always use light mode
+		document.documentElement.classList.remove('dark')
+		localStorage.theme = 'light'
 	}
 
 	const setupThemeSwitcher = () => {
 		const themeSwitcher = document.getElementById('theme-selector')
 		if (themeSwitcher) {
-			themeSwitcher.addEventListener('click', () => {
-				if (localStorage.theme === 'dark') {
-					localStorage.theme = 'light'
-					document.documentElement.classList.remove('dark')
-				} else {
-					localStorage.theme = 'dark'
-					document.documentElement.classList.add('dark')
-				}
-			})
+			// Remove the theme switcher since we're enforcing light mode
+			themeSwitcher.style.display = 'none'
 		}
 	}
 
