@@ -323,10 +323,10 @@ const { activeMenuItem } = Astro.props;
 
 	// Function to handle mobile menu toggle
 	function setupMobileMenu() {
-		const button = document.getElementById('mobile-menu-button');
-		const menu = document.getElementById('mobile-menu');
-		const openIcon = document.getElementById('menu-open-icon');
-		const closeIcon = document.getElementById('menu-close-icon');
+		const button = document.getElementById('mobile-menu-button') as HTMLButtonElement | null;
+		const menu = document.getElementById('mobile-menu') as HTMLDivElement | null;
+		const openIcon = document.getElementById('menu-open-icon') as HTMLElement | null;
+		const closeIcon = document.getElementById('menu-close-icon') as HTMLElement | null;
 		
 		if (!button || !menu || !openIcon || !closeIcon) return;
 		
@@ -334,10 +334,10 @@ const { activeMenuItem } = Astro.props;
 		
 		function toggleMenu() {
 			isOpen = !isOpen;
-			menu.classList.toggle('hidden');
-			openIcon.classList.toggle('hidden');
-			closeIcon.classList.toggle('hidden');
-			button.setAttribute('aria-expanded', isOpen.toString());
+			menu?.classList.toggle('hidden');
+			openIcon?.classList.toggle('hidden');
+			closeIcon?.classList.toggle('hidden');
+			button?.setAttribute('aria-expanded', isOpen.toString());
 		}
 		
 		// Toggle menu on button click
@@ -346,7 +346,7 @@ const { activeMenuItem } = Astro.props;
 		// Close menu when clicking outside
 		document.addEventListener('click', (event) => {
 			const target = event.target as HTMLElement;
-			if (isOpen && !menu.contains(target) && !button.contains(target)) {
+			if (isOpen && menu && button && !menu.contains(target) && !button.contains(target)) {
 				toggleMenu();
 			}
 		});

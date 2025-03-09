@@ -84,7 +84,7 @@ const frontmatter = {
 const content = post?.content || '<p>We apologize, but the content of this post could not be loaded at this time. Please try again later.</p>';
 ---
 
-<Layout title={frontmatter.title} description={frontmatter.description}>
+<Layout frontmatter={frontmatter}>
 	<article class="max-w-4xl mx-auto px-4 py-8">
 		<header class="mb-8">
 			<h1 
