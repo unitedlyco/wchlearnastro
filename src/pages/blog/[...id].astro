@@ -10,7 +10,7 @@ import Layout from '../../layouts/PostLayout.astro'
 // WordPress GraphQL Client
 import WordPressGraphQLClient from '../../lib/wordpress.js'
 
-// Define types for WordPress post data
+// Types
 interface WordPressPost {
 	slug: string;
 	title: string;
@@ -34,6 +34,13 @@ interface WordPressPost {
 	};
 }
 
+interface Props {
+	post?: WordPressPost;
+	title?: string;
+	description?: string;
+	image?: string;
+}
+
 // Enable prerendering for static builds
 export const prerender = true;
 
@@ -46,120 +53,119 @@ export async function getStaticPaths() {
 
 		return posts.map((post: WordPressPost) => ({
 			params: { id: post.slug },
-			props: { slug: post.slug }
+			props: { 
+				post,
+				title: post.title || 'Post Not Available',
+				description: post.excerpt || 'We apologize, but this post could not be loaded at this time.',
+				image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg'
+			}
 		}));
 	} catch (error) {
 		console.error('Error fetching posts for static paths:', error);
-		// Return an empty array if fetching fails
-		// This will prevent the build from failing completely
 		return [];
 	}
 }
 
-const { slug } = Astro.props;
-let post;
-let error = false;
+// Get post from props with fallback values
+const { post, title: fallbackTitle, description: fallbackDescription, image: fallbackImage } = Astro.props as Props;
 
-try {
-	// Fetch the full post data
-	const client = new WordPressGraphQLClient();
-	const response = await client.getPostBySlug(slug);
-	post = response.post;
-} catch (e) {
-	console.error(`Error fetching post with slug "${slug}":`, e);
-	error = true;
-}
-
-// Format the data to match your existing structure
-const frontmatter = error ? {
-	id: slug,
-	title: 'Post Not Available',
-	description: 'We apologize, but this post could not be loaded at this time.',
-	pubDate: new Date(),
-	image: '/placeholder-image.jpg',
-	author: 'WCH Team',
-	tags: []
-} : {
-	id: post.slug,
-	title: post.title,
-	description: post.excerpt.replace(/<\/?[^>]+(>|$)/g, ""), // Strip HTML
-	pubDate: new Date(post.date),
-	image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
-	author: post.author?.node?.name || 'WCH Team',
-	tags: post.categories?.nodes?.map((cat: { name: string }) => cat.name) || []
+// Format the data with fallbacks
+const frontmatter = {
+	id: post?.slug || 'not-found',
+	title: post?.title || fallbackTitle || 'Post Not Available',
+	description: post?.excerpt || fallbackDescription || 'We apologize, but this post could not be loaded at this time.',
+	pubDate: new Date(post?.date || Date.now()),
+	image: post?.featuredImage?.node?.sourceUrl || fallbackImage || '/placeholder-image.jpg',
+	author: post?.author?.node?.name || 'WCH Team',
+	tags: post?.categories?.nodes?.map((cat: { name: string }) => cat.name) || []
 };
 
-// The post content
-const content = error ? '<p>We apologize, but the content of this post could not be loaded at this time. Please try again later.</p>' : post.content;
+// The post content with fallback
+const content = post?.content || '<p>We apologize, but the content of this post could not be loaded at this time. Please try again later.</p>';
 ---
 
-<Layout frontmatter={frontmatter}>
-	{error ? (
-		<div class="error-container">
-			<h2>Content Temporarily Unavailable</h2>
-			<p>We're having trouble connecting to our content server. Please try again later.</p>
-			<a href="/blog" class="btn btn-primary mt-4">Return to Blog</a>
-		</div>
-	) : (
-		<div class="wp-content" set:html={content}></div>
-	)}
+<Layout title={frontmatter.title} description={frontmatter.description}>
+	<article class="max-w-4xl mx-auto px-4 py-8">
+		<header class="mb-8">
+			<h1 
+				class="text-4xl font-bold text-gray-900 dark:text-white mb-4"
+				transition:name={`title-${frontmatter.id}`}
+			>
+				{frontmatter.title}
+			</h1>
+			<div class="flex items-center gap-4 text-gray-600 dark:text-gray-400">
+				<time datetime={frontmatter.pubDate.toISOString()}>
+					{frontmatter.pubDate.toLocaleDateString('en-US', {
+						year: 'numeric',
+						month: 'long',
+						day: 'numeric'
+					})}
+				</time>
+				<span>•</span>
+				<span>{frontmatter.author}</span>
+			</div>
+		</header>
+
+		{frontmatter.image && (
+			<div class="mb-8 aspect-video overflow-hidden rounded-xl">
+				<img
+					src={frontmatter.image}
+					alt={frontmatter.title}
+					class="w-full h-full object-cover"
+					loading="lazy"
+					decoding="async"
+					transition:name={`image-${frontmatter.id}`}
+				/>
+			</div>
+		)}
+
+		<div 
+			class="prose dark:prose-invert mx-auto"
+			set:html={content}
+		/>
+
+		{frontmatter.tags && frontmatter.tags.length > 0 && (
+			<div class="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
+				<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Topics</h2>
+				<div class="flex flex-wrap gap-2">
+					{frontmatter.tags.map((tag: string) => (
+						<span class="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full">
+							{tag}
+						</span>
+					))}
+				</div>
+			</div>
+		)}
+	</article>
 </Layout>
 
 <style>
-	.wp-content {
-		@apply max-w-none overflow-hidden;
-	}
-	/* Add additional styles to properly format WordPress content */
-	.wp-content :global(img) {
-		@apply my-6 max-w-full rounded-lg;
-	}
-	.wp-content :global(h2) {
-		@apply mt-8 mb-4 text-2xl font-bold;
-	}
-	.wp-content :global(h3) {
-		@apply mt-6 mb-3 text-xl font-bold;
-	}
-	.wp-content :global(p) {
-		@apply mb-4;
-	}
-	.wp-content :global(ul) {
-		@apply mb-4 ml-6 list-disc;
-	}
-	.wp-content :global(ol) {
-		@apply mb-4 ml-6 list-decimal;
-	}
-	.wp-content :global(blockquote) {
-		@apply my-6 border-l-4 border-primary-500 pl-4 italic;
-	}
-	/* Handle potential overflow issues */
-	.wp-content :global(pre), 
-	.wp-content :global(code),
-	.wp-content :global(table) {
-		@apply max-w-full overflow-x-auto;
-	}
-	/* Ensure all elements respect container width */
-	.wp-content :global(*) {
-		@apply max-w-full;
-	}
-	/* Fix for iframes and embeds */
-	.wp-content :global(iframe),
-	.wp-content :global(embed) {
-		@apply max-w-full;
+	/* Add smooth transitions for images */
+	img {
+		transition: transform 0.3s ease-in-out;
 	}
 	
-	.error-container {
-		@apply p-8 text-center rounded-lg bg-gray-50 my-8;
+	/* Optional: Add hover effect */
+	img:hover {
+		transform: scale(1.02);
 	}
-	.error-container h2 {
-		@apply text-2xl font-bold mb-4;
+	
+	/* Ensure proper spacing in prose content */
+	:global(.prose) {
+		max-width: 65ch;
 	}
-	.error-container p {
-		@apply mb-4 text-gray-600;
+	
+	:global(.prose img) {
+		border-radius: 0.5rem;
+		margin: 2rem auto;
 	}
-	.btn {
-		@apply inline-block px-6 py-2 rounded-md font-medium;
+	
+	:global(.prose a) {
+		color: var(--color-primary-600);
+		text-decoration: none;
 	}
-	.btn-primary {
-		@apply bg-blue-600 text-white hover:bg-blue-700;
+	
+	:global(.prose a:hover) {
+		text-decoration: underline;
 	}
 </style>

@@ -2,55 +2,108 @@
 // Blog Posts grid Section
 // ------------
 // Description: A grid of blog posts sorted by date in a 3 column layout.
-// Properties:
-// - data: An array of blog posts (legacy format)
-// - posts: An array of posts (new format, used for Substack)
-// - source: The source of the posts ("blog" or "substack")
-// - basePath: The base path for post links (defaults to "/blog/")
+
+// Types
+interface SubstackPost {
+	title: string;
+	link: string;
+	pubDate: Date;
+	author?: string;
+	image?: string;
+	tags?: string[];
+	data?: {
+		title?: string;
+		link?: string;
+		pubDate?: Date;
+		author?: string;
+		image?: string;
+		tags?: string[];
+	};
+}
+
+interface WordPressPost {
+	id: string;
+	data: {
+		title: string;
+		pubDate: Date;
+		author: string;
+		image: string;
+		tags: string[];
+	};
+}
+
+interface Props {
+	data?: WordPressPost[];
+	posts?: SubstackPost[];
+	isLoading?: boolean;
+	source?: 'blog' | 'substack';
+	basePath?: string;
+}
 
 // Components
-// - Layout
 import Section from '../../../components/ui/Section.astro'
 import Row from '../../../components/ui/Row.astro'
 import Col from '../../../components/ui/Col.astro'
-// - UI
 import Post from '../../../components/ui/cards/BlogCard.astro'
 import TagNavigation from '../../../components/ui/blog/TagNavigation.astro'
 
-// Props
-const { data, posts, isLoading = false, source = "blog", basePath = "/blog/" } = Astro.props
+// Props with defaults
+const { 
+	data, 
+	posts, 
+	isLoading = false, 
+	source = "blog", 
+	basePath = "/blog/" 
+} = Astro.props as Props;
 
 // Determine which data source to use
 const postsToDisplay = posts || data || [];
 
-// Instead of filtering out posts without images, provide a default image
-// This ensures all posts are displayed even if they don't have images
-const filteredPosts = postsToDisplay.map((post: any) => {
-	if (source === "substack" && !post.image) {
-		// Create a shallow copy of the post with a default image
+// Helper function to safely get post ID from Substack URL
+function getSubstackPostId(link: string = ''): string {
+	try {
+		const url = new URL(link);
+		const pathParts = url.pathname.split('/');
+		return pathParts[pathParts.length - 1] || '';
+	} catch {
+		return '';
+	}
+}
+
+// Helper function to safely get post data
+function getPostData(post: SubstackPost | WordPressPost, source: string) {
+	if (source === "substack") {
+		const substackPost = post as SubstackPost;
 		return {
-			...post,
-			image: "/og.jpg" // Use an existing image in the public directory
+			id: getSubstackPostId(substackPost.link || substackPost.data?.link),
+			title: substackPost.title || substackPost.data?.title || 'Untitled Post',
+			author: substackPost.author || substackPost.data?.author || 'WCH Team',
+			pubDate: new Date(substackPost.pubDate || substackPost.data?.pubDate || Date.now()),
+			image: substackPost.image || substackPost.data?.image || '/og.jpg',
+			tags: substackPost.tags || substackPost.data?.tags || []
+		};
+	} else {
+		const wpPost = post as WordPressPost;
+		return {
+			id: wpPost.id,
+			title: wpPost.data.title,
+			author: wpPost.data.author,
+			pubDate: new Date(wpPost.data.pubDate),
+			image: wpPost.data.image,
+			tags: wpPost.data.tags
 		};
 	}
-	return post;
-});
+}
+
+// Process posts with proper error handling
+const processedPosts = postsToDisplay.map(post => getPostData(post, source))
+	.filter(post => post.id && post.title); // Filter out invalid posts
+
+// Sort posts by date
+const sortedPosts = processedPosts.sort((a, b) => b.pubDate.getTime() - a.pubDate.getTime());
 
 // Set the correct base path based on source
 const postBasePath = source === "substack" ? "/substack/" : basePath;
-
-// Function to sort posts by date
-const sortedPosts = filteredPosts.sort((a: any, b: any) => {
-	const dateA = source === "substack" ? 
-		new Date(a.pubDate || a.data?.pubDate).getTime() : 
-		new Date(a.data.pubDate).getTime();
-	
-	const dateB = source === "substack" ? 
-		new Date(b.pubDate || b.data?.pubDate).getTime() : 
-		new Date(b.data.pubDate).getTime();
-		
-	return dateB - dateA;
-})
 ---
 
 <Section>
@@ -61,60 +114,31 @@ const sortedPosts = filteredPosts.sort((a: any, b: any) => {
 			<div class="loading-spinner">Loading posts...</div>
 		) : (
 			<div class="blog-posts-grid">
-				{sortedPosts.map((post: any) => {
-					// Handle different post formats based on source
-					const postId = source === "substack" ? 
-						(() => {
-							const url = new URL(post.link || post.data?.link);
-							const pathParts = url.pathname.split('/');
-							return pathParts[pathParts.length - 1];
-						})() : 
-						post.id;
-					
-					const postTitle = source === "substack" ? 
-						(post.title || post.data?.title) : 
-						post.data.title;
-					
-					const postAuthor = source === "substack" ? 
-						(post.author || post.data?.author || "WCH Team") : 
-						post.data.author;
-					
-					const postDate = source === "substack" ? 
-						new Date(post.pubDate || post.data?.pubDate) : 
-						new Date(post.data.pubDate);
-					
-					const postImage = source === "substack" ? 
-						(post.image || post.data?.image) : 
-						post.data.image;
-					
-					const postTags = source === "substack" ? 
-						(post.tags || post.data?.tags || []) : 
-						post.data.tags;
-					
-					const postUrl = `${postBasePath}${postId}`;
-					
-					return (
-						<div class="blog-post-item">
-							<Post
-								link={postUrl}
-								title={postTitle}
-								subtitle={`By ${postAuthor} on ${postDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`}
-								image={postImage}
-								tags={postTags}
-								mobileSimplified={true}
-							>
-								<div class="flex items-start">
-									<div class="inline-flex items-center px-4 py-2 text-sm font-medium text-[#fdfdfd] bg-[#002f56] rounded-lg hover:bg-[#e55d99] hover:text-[#fdfdfd] transition-all">
-										Read More
-										<svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-										</svg>
-									</div>
+				{sortedPosts.map(post => (
+					<div class="blog-post-item">
+						<Post
+							link={`${postBasePath}${post.id}`}
+							title={post.title}
+							subtitle={`By ${post.author} on ${post.pubDate.toLocaleDateString('en-US', { 
+								year: 'numeric', 
+								month: 'long', 
+								day: 'numeric' 
+							})}`}
+							image={post.image}
+							tags={post.tags}
+							mobileSimplified={true}
+						>
+							<div class="flex items-start">
+								<div class="inline-flex items-center px-4 py-2 text-sm font-medium text-[#fdfdfd] bg-[#002f56] rounded-lg hover:bg-[#e55d99] hover:text-[#fdfdfd] transition-all">
+									Read More
+									<svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+									</svg>
 								</div>
-							</Post>
-						</div>
-					);
-				})}
+							</div>
+						</Post>
+					</div>
+				))}
 			</div>
 		)}
 	</div>
@@ -145,7 +169,6 @@ const sortedPosts = filteredPosts.sort((a: any, b: any) => {
 		}
 	}
 	
-	/* Removing the 1-column layout for small screens to ensure 2 columns on all mobile devices */
 	@media (max-width: 480px) {
 		.blog-posts-grid {
 			@apply grid-cols-2 gap-3;

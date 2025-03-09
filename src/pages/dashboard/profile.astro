@@ -52,13 +52,13 @@ const description = 'View and update your profile information.';
 ---
 
 <DashboardLayout title={title} description={description} activeMenuItem="profile">
-  <div class="space-y-5">
+  <div class="space-y-4">
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Your Profile</h1>
     </div>
 
     <!-- Profile content -->
-    <div class="bg-gray-50 dark:bg-gray-700/50 p-5 rounded-xl border border-gray-200 dark:border-gray-700">
+    <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
       <div class="flex flex-col md:flex-row gap-6">
         <!-- Profile Photo Section -->
         <div class="flex flex-col items-center space-y-3">
@@ -94,7 +94,7 @@ const description = 'View and update your profile information.';
 
         <!-- Profile Form -->
         <div class="flex-1">
-          <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Personal Information</h2>
+          <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-2">Personal Information</h2>
           
           <Form id="profile-form" method="post" classes="space-y-4">
             <input type="hidden" id="avatar_url" name="avatar_url" value={profilePhotoUrl || ''} />
@@ -137,13 +137,13 @@ const description = 'View and update your profile information.';
     </div>
     
     <!-- Account Settings -->
-    <div class="bg-gray-50 dark:bg-gray-700/50 p-5 rounded-xl border border-gray-200 dark:border-gray-700">
-      <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-3">Account Settings</h2>
+    <div class="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+      <h2 class="text-base font-semibold text-gray-900 dark:text-white mb-2">Account Settings</h2>
       
       <div class="space-y-3">
         <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <div>
-            <h3 class="font-medium text-gray-900 dark:text-white">Change Password</h3>
+            <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Change Password</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400">Update your password for security</p>
           </div>
           <Button style="secondary" size="sm" id="change-password-btn">
@@ -154,7 +154,7 @@ const description = 'View and update your profile information.';
         
         <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <div>
-            <h3 class="font-medium text-gray-900 dark:text-white">Email Notifications</h3>
+            <h3 class="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Email Notifications</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400">Manage your email preferences</p>
           </div>
           <Button style="secondary" size="sm" id="email-preferences-btn">
@@ -165,7 +165,7 @@ const description = 'View and update your profile information.';
         
         <div class="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <div>
-            <h3 class="font-medium text-red-600 dark:text-red-400">Delete Account</h3>
+            <h3 class="text-sm font-medium text-red-600 dark:text-red-400 mb-0.5">Delete Account</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400">Permanently delete your account and data</p>
           </div>
           <Button style="neutral" size="sm" id="delete-account-btn">

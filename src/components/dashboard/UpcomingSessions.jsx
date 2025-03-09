@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
 import Icon from '../ui/icons/Icon';
 
+// Add loading skeleton component
+const LoadingSkeleton = () => (
+  <div className="animate-pulse space-y-4">
+    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+    <div className="space-y-3">
+      <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+      <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+    </div>
+  </div>
+);
+
 export default function UpcomingSessions({ userId }) {
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,41 +49,40 @@ export default function UpcomingSessions({ userId }) {
     };
   }, [userId]);
 
+  if (isLoading) {
+    return <LoadingSkeleton />;
+  }
+
   return (
-    <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center gap-4">
-        <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-          <Icon name="mdi:calendar-clock" className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-        </div>
-        <div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Upcoming Sessions</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Your scheduled learning</p>
-        </div>
-      </div>
-      <div className="mt-4 space-y-3">
-        {isLoading ? (
-          <div className="flex items-center justify-center p-4">
-            <div className="animate-pulse text-gray-400">Loading sessions...</div>
-          </div>
-        ) : sessions.length > 0 ? (
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        Upcoming Sessions
+      </h3>
+      <div className="space-y-4">
+        {sessions.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400">No upcoming sessions scheduled.</p>
+        ) : (
           sessions.map(session => (
-            <div key={session.id} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div
+              key={session.id}
+              className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
+            >
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white">{session.title}</h4>
-                <p className="text-sm text-gray-500 dark:text-gray-400">{session.datetime}</p>
+                <h4 className="font-medium text-gray-900 dark:text-white">
+                  {session.title}
+                </h4>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {session.datetime}
+                </p>
               </div>
-              <button 
-                className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
-                onClick={() => console.log('View session:', session.id)}
+              <button
+                className="px-3 py-1 text-sm text-primary-600 bg-primary-100 hover:bg-primary-200 dark:text-primary-400 dark:bg-primary-900/30 dark:hover:bg-primary-900/50 rounded-full transition-colors"
+                onClick={() => window.location.href = '/dashboard/sessions'}
               >
-                View
+                View Details
               </button>
             </div>
           ))
-        ) : (
-          <div className="text-center p-4 text-gray-500">
-            No upcoming sessions
-          </div>
         )}
       </div>
     </div>

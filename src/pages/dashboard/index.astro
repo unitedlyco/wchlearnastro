@@ -71,14 +71,14 @@ const description = 'Your personal dashboard to manage your learning journey.';
       <!-- Top row -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- Stats Card - Interactive Island -->
-        <StatsCard client:load userId={user.id} />
+        <StatsCard client:visible userId={user.id} />
 
         <!-- Upcoming Sessions - Interactive Island -->
         <UpcomingSessions client:visible userId={user.id} />
       </div>
 
       <!-- Recent Activity - Interactive Island -->
-      <RecentActivity client:visible userId={user.id} />
+      <RecentActivity client:idle userId={user.id} />
     </div>
   </div>
 

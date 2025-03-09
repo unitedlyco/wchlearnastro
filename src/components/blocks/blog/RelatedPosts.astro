@@ -10,185 +10,188 @@
 
 // Components
 import WordPressGraphQLClient from '../../../lib/wordpress.js';
-import SubstackRSSClient from '../../../lib/substack.js';
+import substackClient from '../../../lib/substack.js';
 
-// Props
-type Props = {
-  categories: string[];
-  currentPostId: string;
-  limit?: number;
-  source?: string;
-};
-
-// Define types for WordPress post data
-interface WordPressPost {
-  slug: string;
-  title: string;
-  featuredImage?: {
-    node?: {
-      sourceUrl?: string;
-    };
-  };
-}
-
-// Define type for Substack post data
+// Types
 interface SubstackPost {
-  title: string;
-  link: string;
-  pubDate: string;
-  content: string;
-  contentSnippet?: string;
-  guid?: string;
-  isoDate?: string;
-  extractedImage?: string;
+    title: any;
+    link: any;
+    pubDate: Date;
+    description: any;
+    content: any;
+    featuredImage: string;
+    author: any;
 }
 
-// Define type for related posts
+interface WordPressPost {
+    slug: string;
+    title: string;
+    featuredImage?: {
+        node?: {
+            sourceUrl?: string;
+        };
+    };
+}
+
 interface RelatedPost {
-  id: string;
-  title: string;
-  image: string;
-  link: string;
+    id: string;
+    title: string;
+    image: string;
+    link: string;
 }
 
-const { categories = [], currentPostId, limit = 4, source = 'wordpress' } = Astro.props;
+interface Props {
+    categories: string[];
+    currentPostId: string;
+    limit?: number;
+    source?: 'wordpress' | 'substack';
+}
+
+// Props with defaults
+const { 
+    categories = [], 
+    currentPostId, 
+    limit = 4, 
+    source = 'wordpress' 
+} = Astro.props as Props;
+
+// Helper function to safely get post ID from Substack URL
+function getSubstackPostId(link: string = ''): string {
+    try {
+        const url = new URL(link);
+        const pathParts = url.pathname.split('/');
+        return pathParts[pathParts.length - 1] || '';
+    } catch {
+        return '';
+    }
+}
+
+// Helper function to extract image from Substack content
+function extractImageFromContent(content: string = ''): string {
+    const imgMatch = content.match(/<img[^>]+src="([^"]+)"/);
+    return imgMatch?.[1] || '/placeholder-image.jpg';
+}
 
 // Fetch related posts
 let relatedPosts: RelatedPost[] = [];
 
 if (source === 'substack') {
-  // Fetch related Substack posts
-  const substackClient = new SubstackRSSClient();
-  try {
-    // Explicitly set excludeContent to false to ensure content is available
-    const { posts } = await substackClient.getAllPosts(limit + 1, 1, false);
-    
-    // Filter out the current post and limit the number of results
-    relatedPosts = posts
-      .filter((post: SubstackPost) => {
-        const url = new URL(post.link);
-        const pathParts = url.pathname.split('/');
-        const slug = pathParts[pathParts.length - 1];
-        return slug !== currentPostId;
-      })
-      .slice(0, limit)
-      .map((post: SubstackPost) => {
-        // Use extractedImage if available, otherwise try to extract from content
-        let image = '/placeholder-image.jpg';
+    try {
+        const posts = await substackClient.getAllPosts();
         
-        // Check if post has extractedImage property
-        if (post.extractedImage) {
-          image = post.extractedImage;
-        }
-        // Only try to extract from content if it exists
-        else if (post.content) {
-          const imgMatch = post.content.match(/<img[^>]+src="([^"]+)"/);
-          if (imgMatch && imgMatch[1]) {
-            image = imgMatch[1];
-          }
-        }
-        
-        const url = new URL(post.link);
-        const pathParts = url.pathname.split('/');
-        const slug = pathParts[pathParts.length - 1];
-        
-        return {
-          id: slug,
-          title: post.title,
-          image: image,
-          link: `/substack/${slug}`
-        };
-      });
-  } catch (error) {
-    console.error('Error fetching related Substack posts:', error);
-  }
-} else if (categories.length > 0) {
-  // Get the first category to query
-  const categorySlug = categories[0].toLowerCase();
-  const client = new WordPressGraphQLClient();
-  
-  try {
-    const response = await client.getCategoryPosts(categorySlug, 8);
-    
-    if (response.category && response.category.posts) {
-      // Filter out the current post and limit the number of results
-      relatedPosts = response.category.posts.nodes
-        .filter((post: WordPressPost) => post.slug !== currentPostId)
-        .slice(0, limit)
-        .map((post: WordPressPost) => ({
-          id: post.slug,
-          title: post.title,
-          image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
-          link: `/blog/${post.slug}`
-        }));
+        // Filter out the current post and limit the number of results
+        relatedPosts = posts
+            .filter((post: SubstackPost) => {
+                const postId = getSubstackPostId(post.link);
+                return postId && postId !== currentPostId;
+            })
+            .slice(0, limit)
+            .map((post: SubstackPost) => {
+                // Get image with fallbacks
+                const image = post.featuredImage || 
+                    (post.content ? extractImageFromContent(post.content) : '/placeholder-image.jpg');
+                
+                return {
+                    id: getSubstackPostId(post.link),
+                    title: post.title || 'Untitled Post',
+                    image,
+                    link: `/substack/${getSubstackPostId(post.link)}`
+                };
+            });
+    } catch (error) {
+        console.error('Error fetching related Substack posts:', error);
     }
-  } catch (error) {
-    console.error('Error fetching related WordPress posts:', error);
-  }
+} else if (categories.length > 0) {
+    // Get the first category to query
+    const categorySlug = categories[0].toLowerCase();
+    const client = new WordPressGraphQLClient();
+    
+    try {
+        const response = await client.getCategoryPosts(categorySlug, 8);
+        
+        if (response.category?.posts?.nodes) {
+            // Filter out the current post and limit the number of results
+            relatedPosts = response.category.posts.nodes
+                .filter((post: WordPressPost) => post.slug !== currentPostId)
+                .slice(0, limit)
+                .map((post: WordPressPost) => ({
+                    id: post.slug,
+                    title: post.title || 'Untitled Post',
+                    image: post.featuredImage?.node?.sourceUrl || '/placeholder-image.jpg',
+                    link: `/blog/${post.slug}`
+                }));
+        }
+    } catch (error) {
+        console.error('Error fetching related WordPress posts:', error);
+    }
 }
+
+// Filter out any invalid posts
+relatedPosts = relatedPosts.filter(post => post.id && post.title);
 ---
 
 <div class="related-posts">
-  {relatedPosts.length > 0 ? (
-    <>
-      <h3 class="related-posts__heading">Related Articles</h3>
-      <div class="related-posts__grid">
-        {relatedPosts.map((post: RelatedPost) => (
-          <a href={post.link} class="related-post">
-            <div class="related-post__image-container">
-              <img 
-                src={post.image} 
-                alt={post.title} 
-                class="related-post__image" 
-              />
+    {relatedPosts.length > 0 ? (
+        <>
+            <h3 class="related-posts__heading">Related Articles</h3>
+            <div class="related-posts__grid">
+                {relatedPosts.map((post: RelatedPost) => (
+                    <a href={post.link} class="related-post">
+                        <div class="related-post__image-container">
+                            <img 
+                                src={post.image} 
+                                alt={post.title} 
+                                class="related-post__image" 
+                                loading="lazy"
+                                decoding="async"
+                            />
+                        </div>
+                        <h4 class="related-post__title" set:html={post.title} />
+                    </a>
+                ))}
             </div>
-            <h4 class="related-post__title" set:html={post.title} />
-          </a>
-        ))}
-      </div>
-    </>
-  ) : (
-    <p class="related-posts__empty">No related articles found.</p>
-  )}
+        </>
+    ) : (
+        <p class="related-posts__empty">No related articles found.</p>
+    )}
 </div>
 
 <style>
-  .related-posts__heading {
-    @apply text-xl font-bold mb-4 mt-8;
-  }
-  
-  .related-posts__grid {
-    @apply grid grid-cols-2 gap-4;
-  }
-  
-  .related-post {
-    @apply block no-underline hover:opacity-90 transition-opacity;
-  }
-  
-  .related-post__image-container {
-    @apply relative w-full pt-[75%] mb-2 rounded overflow-hidden;
-  }
-  
-  .related-post__image {
-    @apply absolute top-0 left-0 w-full h-full object-cover;
-  }
-  
-  .related-post__title {
-    @apply text-sm font-medium text-neutral-800 line-clamp-2;
-  }
-  
-  .related-posts__empty {
-    @apply text-neutral-500 italic text-sm;
-  }
-  
-  /* Add specific media query for small screens to ensure 2 columns with appropriate spacing */
-  @media (max-width: 480px) {
+    .related-posts__heading {
+        @apply text-xl font-bold mb-4 mt-8;
+    }
+    
     .related-posts__grid {
-      @apply grid-cols-2 gap-3;
+        @apply grid grid-cols-2 gap-4;
+    }
+    
+    .related-post {
+        @apply block no-underline hover:opacity-90 transition-opacity;
+    }
+    
+    .related-post__image-container {
+        @apply relative w-full pt-[75%] mb-2 rounded overflow-hidden;
+    }
+    
+    .related-post__image {
+        @apply absolute top-0 left-0 w-full h-full object-cover;
     }
     
     .related-post__title {
-      @apply text-xs;
+        @apply text-sm font-medium text-neutral-800 line-clamp-2;
     }
-  }
+    
+    .related-posts__empty {
+        @apply text-neutral-500 italic text-sm;
+    }
+    
+    @media (max-width: 480px) {
+        .related-posts__grid {
+            @apply grid-cols-2 gap-3;
+        }
+        
+        .related-post__title {
+            @apply text-xs;
+        }
+    }
 </style> 

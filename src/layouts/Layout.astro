@@ -33,7 +33,7 @@ const themeColor = configData.mode === 'dark' ? '#000000' : '#ffffff' // Adjust 
 ---
 
 <!doctype html>
-<html lang="en" class="scroll-animation mode-auto">
+<html lang="en" class:list={["scroll-animation", { dark: configData.mode === 'dark' }]}>
 	<head>
 		<meta name="theme-color" content={themeColor} />
 		<Header title={title} description={description} ogImage={ogImage} noindex={noindex} />

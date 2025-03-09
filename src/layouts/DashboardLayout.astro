@@ -27,94 +27,96 @@ const profilePhotoUrl = user?.user_metadata?.avatar_url || null;
 ---
 
 <Layout title={title} description={description} ogImage={ogImage} noindex={noindex}>
-  <div class="dashboard-container max-w-7xl mx-auto px-4 py-8 flex gap-6">
-    <!-- Sidebar -->
-    <aside class="dashboard-sidebar w-64 h-[90vh] flex flex-col bg-white dark:bg-gray-800 rounded-[20px] border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
-      <!-- User info -->
-      <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-        <div class="flex items-center gap-3">
-          <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-primary-100 dark:border-primary-900 flex items-center justify-center bg-primary-500 text-white">
-            {profilePhotoUrl ? (
-              <img 
-                src={profilePhotoUrl} 
-                alt={`${displayName || user?.email}'s profile photo`} 
-                class="w-full h-full object-cover"
-              />
-            ) : (
-              <span class="text-2xl">
-                {displayName ? displayName.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
-              </span>
-            )}
-          </div>
-          <div class="overflow-hidden">
-            <h3 class="font-medium text-2xl text-gray-900 dark:text-white truncate leading-none mb-0">
-              {displayName || user?.email}
-            </h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400 truncate leading-none" data-user-email>{user?.email}</p>
+  <div class="w-full bg-gray-50 dark:bg-gray-900">
+    <div class="container mx-auto px-4 py-8 flex gap-2">
+      <!-- Sidebar -->
+      <aside class="dashboard-sidebar w-64 h-[90vh] flex flex-col bg-white dark:bg-gray-800 rounded-[20px] border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+        <!-- User info -->
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div class="flex items-center gap-3">
+            <div class="w-14 h-14 rounded-full overflow-hidden border-2 border-primary-100 dark:border-primary-900 flex items-center justify-center bg-primary-500 text-white">
+              {profilePhotoUrl ? (
+                <img 
+                  src={profilePhotoUrl} 
+                  alt={`${displayName || user?.email}'s profile photo`} 
+                  class="w-full h-full object-cover"
+                />
+              ) : (
+                <span class="text-2xl">
+                  {displayName ? displayName.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div class="overflow-hidden">
+              <h3 class="font-medium text-2xl text-gray-900 dark:text-white truncate leading-none mb-0">
+                {displayName || user?.email}
+              </h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400 truncate leading-none" data-user-email>{user?.email}</p>
+            </div>
           </div>
         </div>
-      </div>
+        
+        <!-- Navigation -->
+        <nav class="flex-1 p-4">
+          <ul class="space-y-2">
+            <li>
+              <a 
+                href="/dashboard" 
+                class={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeMenuItem === 'dashboard' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
+              >
+                <Icon name="mdi:view-dashboard-outline" class="w-5 h-5" />
+                <span>Dashboard</span>
+              </a>
+            </li>
+            <li>
+              <a 
+                href="/dashboard/profile" 
+                class={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeMenuItem === 'profile' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
+              >
+                <Icon name="mdi:account-outline" class="w-5 h-5" />
+                <span>Profile</span>
+              </a>
+            </li>
+            <li>
+              <a 
+                href="/dashboard/courses" 
+                class={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeMenuItem === 'courses' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
+              >
+                <Icon name="mdi:book-open-outline" class="w-5 h-5" />
+                <span>My Courses</span>
+              </a>
+            </li>
+            <li>
+              <a 
+                href="/dashboard/settings" 
+                class={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeMenuItem === 'settings' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
+              >
+                <Icon name="mdi:cog-outline" class="w-5 h-5" />
+                <span>Settings</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        
+        <!-- Sign out button (bottom aligned) -->
+        <div class="p-4 mt-auto border-t border-gray-200 dark:border-gray-700">
+          <form action="/api/auth/signout" method="post">
+            <button 
+              type="submit"
+              class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors w-full"
+            >
+              <Icon name="mdi:logout" class="w-5 h-5" />
+              <span>Sign Out</span>
+            </button>
+          </form>
+        </div>
+      </aside>
       
-      <!-- Navigation -->
-      <nav class="flex-1 p-4">
-        <ul class="space-y-2">
-          <li>
-            <a 
-              href="/dashboard" 
-              class={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeMenuItem === 'dashboard' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
-            >
-              <Icon name="mdi:view-dashboard-outline" class="w-5 h-5" />
-              <span>Dashboard</span>
-            </a>
-          </li>
-          <li>
-            <a 
-              href="/dashboard/profile" 
-              class={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeMenuItem === 'profile' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
-            >
-              <Icon name="mdi:account-outline" class="w-5 h-5" />
-              <span>Profile</span>
-            </a>
-          </li>
-          <li>
-            <a 
-              href="/dashboard/courses" 
-              class={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeMenuItem === 'courses' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
-            >
-              <Icon name="mdi:book-open-outline" class="w-5 h-5" />
-              <span>My Courses</span>
-            </a>
-          </li>
-          <li>
-            <a 
-              href="/dashboard/settings" 
-              class={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${activeMenuItem === 'settings' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'}`}
-            >
-              <Icon name="mdi:cog-outline" class="w-5 h-5" />
-              <span>Settings</span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-      
-      <!-- Sign out button (bottom aligned) -->
-      <div class="p-4 mt-auto border-t border-gray-200 dark:border-gray-700">
-        <form action="/api/auth/signout" method="post">
-          <button 
-            type="submit"
-            class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors w-full"
-          >
-            <Icon name="mdi:logout" class="w-5 h-5" />
-            <span>Sign Out</span>
-          </button>
-        </form>
-      </div>
-    </aside>
-    
-    <!-- Main Content -->
-    <main class="dashboard-content flex-1 bg-white dark:bg-gray-800 rounded-[20px] border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-auto">
-      <slot />
-    </main>
+      <!-- Main Content -->
+      <main class="dashboard-content flex-1 bg-white dark:bg-gray-800 rounded-[20px] border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-auto">
+        <slot />
+      </main>
+    </div>
   </div>
 </Layout>
 

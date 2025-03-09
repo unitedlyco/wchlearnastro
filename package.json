@@ -7,7 +7,8 @@
     "start": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "vitest run"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
@@ -37,6 +38,7 @@
   "devDependencies": {
     "@astrojs/partytown": "^2.1.4",
     "@tailwindcss/typography": "^0.5.13",
-    "supabase": "^2.15.8"
+    "supabase": "^2.15.8",
+    "vitest": "^3.0.8"
   }
 }

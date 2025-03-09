@@ -16,7 +16,7 @@ import substackClient from '../../lib/substack.js';
 interface SubstackPost {
 	title: string;
 	link: string;
-	pubDate: string | Date;
+	pubDate: string;
 	content: string;
 	contentSnippet?: string;
 	guid?: string;
@@ -50,16 +50,40 @@ const header = {
 	text: 'Stay informed with the latest Substack articles from World Council for Health.'
 };
 
-// Get page number from URL params
+// Enable prerendering for static builds
+export const prerender = true;
+
+// Get static paths for all pages except page 1 (handled by index.astro)
+export async function getStaticPaths() {
+	try {
+		const posts = await substackClient.getAllPosts();
+		const totalPages = Math.ceil(posts.length / 12); // 12 posts per page
+		
+		// Generate paths for pages 2 onwards
+		return Array.from({ length: totalPages - 1 }, (_, i) => {
+			const pageNum = i + 2; // Start from page 2
+			return {
+				params: { page: pageNum.toString() },
+				props: { 
+					pageNum,
+					posts: posts.slice((pageNum - 1) * 12, pageNum * 12),
+					totalPages
+				}
+			};
+		});
+	} catch (error) {
+		console.error('Error generating static paths:', error);
+		return [];
+	}
+}
+
+// Get page number and posts from props (type-safe)
 const { page } = Astro.params;
+const { pageNum, posts, totalPages } = Astro.props as PageProps;
 const currentPage = parseInt(page || '1');
 
-// Fetch posts for the current page
-const { posts, pagination } = await substackClient.getPaginatedPosts(currentPage);
-const totalPages = pagination.totalPages;
-
 // Transform posts to match blog format
-const transformedPosts = posts.map(post => ({
+const transformedPosts = posts.map((post: SubstackPost) => ({
 	title: post.title || 'Untitled Post',
 	description: post.description || '',
 	pubDate: new Date(post.pubDate),

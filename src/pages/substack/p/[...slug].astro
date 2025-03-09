@@ -1,0 +1,165 @@
+---
+// Substack Post Page
+// ------------
+// Description: The Substack post page.
+
+// Components
+// - Layout
+import PostLayout from '../../../layouts/PostLayout.astro'
+import Breadcrumbs from '../../../components/ui/Breadcrumbs.astro'
+import RelatedPosts from '../../../components/blocks/blog/RelatedPosts.astro'
+
+// Substack Client
+import substackClient from '../../../lib/substack.js'
+
+// Types
+interface SubstackPost {
+  title: string;
+  link: string;
+  pubDate: Date;
+  content: string;
+  description: string;
+  featuredImage: string;
+  author: string;
+}
+
+// Enable prerendering for static builds
+export const prerender = true;
+
+// Get static paths for all posts
+export async function getStaticPaths() {
+  try {
+    const posts = await substackClient.getAllPosts();
+    
+    return posts.map((post) => {
+      // Extract slug from the full URL path
+      const urlParts = post.link.split('/');
+      const slug = urlParts[urlParts.length - 1];
+      
+      return {
+        params: { slug: [slug] }, // Wrap slug in array for [...slug] routing
+        props: { post }
+      };
+    });
+  } catch (error) {
+    console.error('Error generating static paths:', error);
+    return [];
+  }
+}
+
+// Get the slug from URL params and post from props
+const { slug } = Astro.params;
+const { post } = Astro.props;
+
+// Ensure we have a post
+if (!post) {
+  return Astro.redirect('/404');
+}
+
+// Format the data with fallbacks
+const frontmatter = {
+  title: post?.title || 'Post Not Available',
+  description: post?.description || 'We apologize, but this post could not be loaded at this time.',
+  pubDate: post?.pubDate || new Date(),
+  author: post?.author || 'WCH Team',
+  image: post?.featuredImage || '/placeholder-image.jpg',
+  tags: ['Substack'],
+  id: slug?.[0] || 'not-found',
+  originalLink: post?.link
+};
+
+// SEO
+const SEO = {
+  title: `${frontmatter.title} | WCH Learn`,
+  description: frontmatter.description
+}
+---
+
+<PostLayout frontmatter={frontmatter}>
+  <div class="prose dark:prose-invert mx-auto" set:html={post?.content} />
+</PostLayout>
+
+<style>
+  .post-container {
+    @apply container mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8;
+  }
+
+  .post-main {
+    @apply lg:col-span-2;
+  }
+
+  .post-featured-image {
+    @apply mb-8;
+  }
+
+  .post-meta {
+    @apply mb-6 space-y-3;
+  }
+
+  .post-meta-top {
+    @apply flex items-center text-sm text-gray-600;
+  }
+
+  .post-meta-divider {
+    @apply mx-2;
+  }
+
+  .post-categories {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .post-category {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors;
+  }
+
+  .post-title {
+    @apply text-4xl font-bold text-gray-900 mb-8;
+  }
+
+  .post-content {
+    @apply prose-lg prose-headings:font-bold prose-a:text-blue-600 prose-img:rounded-lg;
+  }
+
+  .post-sidebar-wrapper {
+    @apply lg:col-span-1;
+  }
+
+  .post-sidebar {
+    @apply space-y-8 sticky top-8;
+  }
+
+  .sidebar-ad {
+    @apply block rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow;
+  }
+
+  .sidebar-section {
+    @apply bg-gray-50 rounded-lg p-6;
+  }
+
+  .sidebar-heading {
+    @apply text-xl font-bold text-gray-900 mb-4;
+  }
+
+  /* Dark mode adjustments */
+  :global(.dark) {
+    .post-title {
+      @apply text-white;
+    }
+
+    .post-meta-top {
+      @apply text-gray-400;
+    }
+
+    .post-category {
+      @apply bg-gray-800 text-gray-200 hover:bg-gray-700;
+    }
+
+    .sidebar-section {
+      @apply bg-gray-800;
+    }
+
+    .sidebar-heading {
+      @apply text-gray-200;
+    }
+  }
+</style> 

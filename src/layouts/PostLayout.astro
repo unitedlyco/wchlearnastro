@@ -1,6 +1,35 @@
 ---
 // Imports
-const { frontmatter } = Astro.props
+import type { MarkdownLayoutProps } from 'astro'
+
+// Types
+interface Frontmatter {
+	title: string;
+	description: string;
+	pubDate: Date;
+	author: string;
+	image?: string;
+	tags?: string[];
+	id?: string;
+	originalLink?: string;
+}
+
+interface Props {
+	frontmatter: Frontmatter;
+}
+
+// Get props with defaults
+const { frontmatter } = Astro.props as Props;
+
+// Ensure required properties have fallbacks
+const title = frontmatter?.title || 'Post Not Found';
+const description = frontmatter?.description || 'No description available';
+const pubDate = frontmatter?.pubDate || new Date();
+const author = frontmatter?.author || 'WCH Team';
+const image = frontmatter?.image;
+const tags = frontmatter?.tags || [];
+const id = frontmatter?.id || 'post';
+const originalLink = frontmatter?.originalLink;
 
 //Layout Components
 import Layout from './Layout.astro'
@@ -13,12 +42,12 @@ import Breadcrumbs from '../components/ui/Breadcrumbs.astro'
 // Content
 // - SEO
 const SEO = {
-	title: `${frontmatter.title} | WCH Learn`,
-	description: `${frontmatter.description}`
+	title: `${title} | WCH Learn`,
+	description: description
 }
 
 // Get related posts based on categories
-const categories = frontmatter.tags || [];
+const categories = tags;
 const isSubstack = categories.includes('Substack');
 ---
 
@@ -27,11 +56,11 @@ const isSubstack = categories.includes('Substack');
 		<div class="post-main">
 			<Breadcrumbs classes="mb-6" />
 			
-			{frontmatter.image && (
+			{image && (
 				<div class="post-featured-image">
 					<img 
-						src={frontmatter.image} 
-						alt={frontmatter.title} 
+						src={image} 
+						alt={title || 'Blog post featured image'} 
 						class="w-full h-auto rounded-lg shadow-md"
 					/>
 				</div>
@@ -40,7 +69,7 @@ const isSubstack = categories.includes('Substack');
 			<div class="post-meta">
 				<div class="post-meta-top">
 					<span class="post-date">
-						{frontmatter.pubDate.toLocaleDateString('en-US', {
+						{pubDate.toLocaleDateString('en-US', {
 							year: 'numeric',
 							month: 'long',
 							day: 'numeric'
@@ -50,13 +79,13 @@ const isSubstack = categories.includes('Substack');
 					<span class="post-meta-divider">|</span>
 					
 					<span class="post-author">
-						Author: {frontmatter.author}
+						Author: {author}
 					</span>
 				</div>
 				
-				{frontmatter.tags && frontmatter.tags.length > 0 && (
+				{tags && tags.length > 0 && (
 					<div class="post-categories">
-						{frontmatter.tags.map((tag: string) => (
+						{tags.map((tag: string) => (
 							<a href={`/blog/tags/${tag.toLowerCase()}`} class="post-category">
 								{tag}
 							</a>
@@ -65,15 +94,15 @@ const isSubstack = categories.includes('Substack');
 				)}
 			</div>
 			
-			<h1 class="post-title">{frontmatter.title}</h1>
+			<h1 class="post-title">{title}</h1>
 			
 			<div class="post-content">
 				<slot />
 			</div>
 			
-			{frontmatter.originalLink && (
+			{originalLink && (
 				<div class="original-link-container">
-					<a href={frontmatter.originalLink} target="_blank" rel="noopener noreferrer" class="original-link-button">
+					<a href={originalLink} target="_blank" rel="noopener noreferrer" class="original-link-button">
 						Read original post on Substack
 					</a>
 				</div>
@@ -94,7 +123,7 @@ const isSubstack = categories.includes('Substack');
 					<h3 class="sidebar-heading">Related Articles</h3>
 					<RelatedPosts 
 						categories={categories} 
-						currentPostId={frontmatter.id} 
+						currentPostId={id} 
 						source={isSubstack ? "substack" : "wordpress"}
 					/>
 				</div>

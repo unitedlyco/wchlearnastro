@@ -15,7 +15,6 @@
 // - UI
 import { Icon } from 'astro-icon/components'
 import Button from './Button.astro'
-import Switcher from './ModeSwitcher.astro'
 
 // Data
 import { navigationBarData } from '../../config/navigationBar'
@@ -49,11 +48,18 @@ const savedNavActions = navActions.map((action) => {
 		style: action.style as 'primary' | 'secondary' | 'neutral'
 	};
 });
+
+// Props
+interface Props {
+	activeMenuItem?: string;
+}
+
+const { activeMenuItem } = Astro.props;
 ---
 
-<header class="header">
-	<div class="header__container">
-		<nav aria-label="main navigation" role="navigation" class="header__nav">
+<header class="header fixed w-full top-0 left-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+	<div class="container mx-auto px-4">
+		<div class="flex items-center justify-between h-16">
 			<!-- Logo -->
 			<a href="/" class="header__logo">
 				<img 
@@ -72,175 +78,299 @@ const savedNavActions = navActions.map((action) => {
 				/>
 			</a>
 
-			<!-- Menu toggle -->
-			<button
-				id="header-toggle"
-				class="header__toggle"
-				aria-expanded="false"
-				aria-label="Toggle navigation"
-			>
-				<div class="header__toggle-inner">
-					<span aria-hidden="true"></span>
-					<span aria-hidden="true"></span>
-					<span aria-hidden="true"></span>
-				</div>
-			</button>
+			<!-- Desktop Navigation -->
+			<nav class="hidden md:flex items-center justify-center flex-1 gap-8">
+				<a 
+					href="/courses" 
+					class:list={[
+						"text-base font-medium hover:text-primary-600 transition-colors",
+						{
+							"text-primary-600": activeMenuItem === "courses",
+							"text-gray-600 dark:text-gray-300": activeMenuItem !== "courses"
+						}
+					]}
+				>
+					Courses
+				</a>
+				<a 
+					href="/blog" 
+					class:list={[
+						"text-base font-medium hover:text-primary-600 transition-colors",
+						{
+							"text-primary-600": activeMenuItem === "blog",
+							"text-gray-600 dark:text-gray-300": activeMenuItem !== "blog"
+						}
+					]}
+				>
+					Blog
+				</a>
+				<a 
+					href="/substack" 
+					class:list={[
+						"text-base font-medium hover:text-primary-600 transition-colors",
+						{
+							"text-primary-600": activeMenuItem === "substack",
+							"text-gray-600 dark:text-gray-300": activeMenuItem !== "substack"
+						}
+					]}
+				>
+					Substack
+				</a>
+				{/* Pricing menu item temporarily hidden
+				<a 
+					href="/pricing" 
+					class:list={[
+						"text-base font-medium hover:text-primary-600 transition-colors",
+						{
+							"text-primary-600": activeMenuItem === "pricing",
+							"text-gray-600 dark:text-gray-300": activeMenuItem !== "pricing"
+						}
+					]}
+				>
+					Pricing
+				</a>
+				*/}
+			</nav>
 
-			<!-- Navigation links -->
-			<ul role="menubar" aria-label="Select page" class="header__menu">
-				{
-					navItems.map((item) => (
-						<li role="none" class="header__menu-item">
-							{!item.submenu ? (
-								<a
-									href={item.link}
-									role="menuitem"
-									class={`header__menu-link ${isActivePath(item.link) ? 'active' : ''}`}
-								>
-									{item.name}
-								</a>
-							) : (
-								<span
-									role="menuitem"
-									class={`header__menu-link ${isActivePath(item.link) ? 'active' : ''}`}
-								>
-									{item.name}
-									<Icon name="chevron-down" class="header__menu-chevron" />
-								</span>
-							)}
-							{item.submenu && (
-								<ul class="header__submenu">
-									{item.submenu.map((subItem) => (
-										<li role="none" class="header__submenu-item">
-											<a
-												href={subItem.link}
-												role="menuitem"
-												class={`header__menu-link ${isActivePath(item.link) ? 'active' : ''}`}
-											>
-												{subItem.name}
-											</a>
-										</li>
-									))}
-								</ul>
-							)}
-						</li>
-					))
-				}
-			</ul>
-
-			<!-- Theme Switcher -->
-			<Switcher />
-
-			<!-- Navigation action buttons -->
-			<div class="header__actions">
-				{
-					savedNavActions.map((action) => (
-						<Button 
-							classes="flex-auto" 
-							size={action.size} 
-							style={action.style} 
-							link={action.link}
+			<!-- Desktop Actions -->
+			<div class="hidden md:flex items-center gap-4">
+				{!isLoggedIn ? (
+					<>
+						<a 
+							href="/signin" 
+							class="inline-flex items-center justify-center px-6 py-2.5 text-base font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
+							id="nav-signin-btn"
 						>
-							{action.name}
-						</Button>
-					))
-				}
+							Sign In
+						</a>
+						<a 
+							href="/signup" 
+							class="inline-flex items-center justify-center px-6 py-2.5 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+							id="nav-action-btn"
+						>
+							Join Now!
+						</a>
+					</>
+				) : (
+					<a 
+						href="/dashboard" 
+						class="inline-flex items-center justify-center px-6 py-2.5 text-base font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors"
+						id="nav-dashboard-btn"
+					>
+						Dashboard
+					</a>
+				)}
 			</div>
-		</nav>
+
+			<!-- Mobile Menu Button -->
+			<button
+				type="button"
+				class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
+				aria-controls="mobile-menu"
+				aria-expanded="false"
+				id="mobile-menu-button"
+			>
+				<span class="sr-only">Open main menu</span>
+				<Icon name="mdi:menu" class="block h-6 w-6" id="menu-open-icon" />
+				<Icon name="mdi:close" class="hidden h-6 w-6" id="menu-close-icon" />
+			</button>
+		</div>
+
+		<!-- Mobile Menu -->
+		<div class="md:hidden hidden" id="mobile-menu">
+			<div class="px-2 pt-2 pb-3 space-y-1">
+				<a
+					href="/courses"
+					class:list={[
+						"block px-3 py-2 rounded-md text-base font-medium",
+						{
+							"text-primary-600 bg-primary-50 dark:bg-primary-900/50": activeMenuItem === "courses",
+							"text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800": activeMenuItem !== "courses"
+						}
+					]}
+				>
+					Courses
+				</a>
+				<a
+					href="/blog"
+					class:list={[
+						"block px-3 py-2 rounded-md text-base font-medium",
+						{
+							"text-primary-600 bg-primary-50 dark:bg-primary-900/50": activeMenuItem === "blog",
+							"text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800": activeMenuItem !== "blog"
+						}
+					]}
+				>
+					Blog
+				</a>
+				<a
+					href="/substack"
+					class:list={[
+						"block px-3 py-2 rounded-md text-base font-medium",
+						{
+							"text-primary-600 bg-primary-50 dark:bg-primary-900/50": activeMenuItem === "substack",
+							"text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800": activeMenuItem !== "substack"
+						}
+					]}
+				>
+					Substack
+				</a>
+				{/* Pricing menu item temporarily hidden
+				<a
+					href="/pricing"
+					class:list={[
+						"block px-3 py-2 rounded-md text-base font-medium",
+						{
+							"text-primary-600 bg-primary-50 dark:bg-primary-900/50": activeMenuItem === "pricing",
+							"text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800": activeMenuItem !== "pricing"
+						}
+					]}
+				>
+					Pricing
+				</a>
+				*/}
+			</div>
+			<div class="pt-4 pb-3 border-t border-gray-200 dark:border-gray-800">
+				<div class="px-2 space-y-1">
+					<div class="flex items-center justify-between px-3 py-2">
+						<span class="text-sm font-medium text-gray-600 dark:text-gray-300">Theme</span>
+					</div>
+					{!isLoggedIn ? (
+						<>
+							<a
+								href="/signin"
+								class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800"
+							>
+								Sign In
+							</a>
+							<a
+								href="/signup"
+								class="block px-3 py-2 rounded-md text-base font-medium text-white bg-primary-600 hover:bg-primary-700 dark:hover:bg-primary-500"
+							>
+								Join Now!
+							</a>
+						</>
+					) : (
+						<a
+							href="/dashboard"
+							class="block px-3 py-2 rounded-md text-base font-medium text-white bg-primary-600 hover:bg-primary-700 dark:hover:bg-primary-500"
+						>
+							Dashboard
+						</a>
+					)}
+				</div>
+			</div>
+		</div>
 	</div>
 </header>
 
+<!-- Spacer to prevent content from being hidden under fixed header -->
+<div class="h-16"></div>
+
 <style>
 	.header {
-		@apply sticky top-0 z-20 w-full animate-fadeInShadowLight [animation-range:0%_20rem] [animation-timeline:scroll()] before:absolute after:absolute after:left-0 after:top-full after:z-10 after:block after:h-px after:w-full lg:after:hidden dark:animate-fadeInShadowDark dark:[animation-range:0%_20rem] dark:[animation-timeline:scroll()];
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		background-color: rgba(255, 255, 255, 0.9);
 	}
-	.header:before {
-		@apply block h-full w-full bg-white/90 lg:backdrop-blur-sm dark:bg-neutral-900/90;
+
+	.dark .header {
+		background-color: rgba(31, 41, 55, 0.95);
 	}
-	.header__container {
-		@apply container relative mx-auto px-6;
-	}
+
 	.header__logo {
 		@apply flex flex-auto items-center gap-2 whitespace-nowrap py-3 focus:outline-none;
 	}
-	.header__nav {
-		@apply flex h-[5.5rem] items-stretch gap-6 font-medium text-neutral-700 lg:justify-between dark:text-neutral-50;
-	}
-	.header__menu {
-		@apply invisible absolute left-0 top-0 z-[-1] ml-auto h-dvh w-full justify-center overflow-hidden overflow-y-auto overscroll-contain bg-white/90 px-8 py-[6rem] font-medium opacity-0 transition-[opacity,visibility] duration-300 lg:visible lg:relative lg:top-0 lg:z-0 lg:flex lg:h-full lg:w-auto lg:items-stretch lg:overflow-visible lg:bg-white/0 lg:px-0 lg:py-0 lg:pt-0 lg:opacity-100 dark:bg-neutral-900/90 dark:lg:bg-transparent;
-	}
-	.header__menu--open {
-		@apply visible opacity-100 backdrop-blur-sm;
-	}
-	.header__menu-item {
-		@apply relative flex cursor-pointer flex-col items-stretch lg:flex-row;
-	}
-	.header__menu-link {
-		@apply relative flex items-center gap-1 py-4 transition-colors duration-300 hover:text-primary-500 focus:text-primary-600 focus:outline-none focus-visible:outline-none lg:px-6 [&.active]:text-primary-500;
-	}
-	.header__menu-chevron {
-		@apply h-4 w-4 transition-transform [.header\_\_menu-item.open_&]:rotate-180;
-	}
-	.header__submenu {
-		@apply left-0 top-full hidden animate-dropdown rounded bg-neutral-300/10 px-4 lg:absolute lg:min-w-48 lg:rounded-t-none lg:bg-white/90 lg:p-0 lg:shadow-lg lg:shadow-neutral-700/5 lg:backdrop-blur-sm dark:bg-neutral-500/10 lg:dark:bg-neutral-900/90 lg:dark:shadow-neutral-950/50 [.header\_\_menu-item.open_&]:block;
-	}
-	.header__submenu-item {
-		@apply hidden [.header\_\_menu-item.open_&]:block;
-	}
-	.header__submenu-link {
-		@apply px-8 py-4 hover:text-primary-500 [.header\_\_menu-item.open_&]:flex;
-	}
-	.header__toggle {
-		@apply relative order-10 block h-10 w-10 self-center lg:hidden [&--open]:visible [&--open]:opacity-100;
-	}
-	.header__toggle-inner {
-		@apply absolute left-1/2 top-1/2 w-6 -translate-x-1/2 -translate-y-1/2 transform;
-	}
-	.header__toggle-inner span {
-		@apply absolute block h-0.5 transform rounded-full bg-neutral-900 transition-all duration-300 dark:bg-white;
-	}
-	.header__toggle-inner span:nth-child(1) {
-		@apply w-9/12 -translate-y-2 [.header\_\_toggle--open_&]:w-6 [.header\_\_toggle--open_&]:translate-y-0 [.header\_\_toggle--open_&]:rotate-45;
-	}
-	.header__toggle-inner span:nth-child(2) {
-		@apply w-6 [.header\_\_toggle--open_&]:-rotate-45;
-	}
-	.header__toggle-inner span:nth-child(3) {
-		@apply w-1/2 origin-top-left translate-y-2 [.header\_\_toggle--open_&]:w-0;
-	}
-	.header__actions {
-		@apply fixed bottom-0 left-0 hidden w-full items-center justify-between gap-4 border-t border-neutral-100 bg-white px-6 py-4 lg:relative lg:ml-auto lg:flex lg:w-auto lg:border-none lg:bg-transparent lg:px-0 lg:py-0 dark:border-neutral-800 dark:bg-neutral-950 lg:dark:bg-transparent [.header\_\_menu--open~&]:flex;
+
+	@media (max-width: 768px) {
+		#mobile-menu {
+			max-height: calc(100vh - 4rem);
+			overflow-y: auto;
+		}
 	}
 </style>
 
 <script>
-  // Function to update navigation button based on authentication state
-  function updateNavButton() {
-    // Check if user is logged in by looking for tokens
-    const hasAccessToken = document.cookie.includes('sb-access-token') || 
-                          localStorage.getItem('sb-access-token');
-    
-    // Find the navigation action button
-    const navActionButton = document.querySelector('.header__actions .button');
-    if (!navActionButton) return;
-    
-    // Update button text and link based on auth state
-    if (hasAccessToken) {
-      navActionButton.textContent = 'Dashboard';
-      navActionButton.setAttribute('href', '/dashboard');
-      navActionButton.className = navActionButton.className
-        .replace(/button--primary/g, 'button--secondary');
-    } else {
-      navActionButton.textContent = 'Join Now!';
-      navActionButton.setAttribute('href', '/signup');
-      navActionButton.className = navActionButton.className
-        .replace(/button--secondary/g, 'button--primary');
-    }
-  }
+	// Function to update navigation buttons based on authentication state
+	function updateNavButtons() {
+		// Check if user is logged in by looking for tokens
+		const hasAccessToken = document.cookie.includes('sb-access-token') || 
+							  localStorage.getItem('sb-access-token');
+		
+		// Update all auth-related buttons
+		document.querySelectorAll<HTMLElement>('.nav-auth-btn').forEach(button => {
+			const isActionButton = button.id === 'nav-action-btn';
+			
+			if (hasAccessToken) {
+				if (isActionButton) {
+					button.textContent = 'Dashboard';
+					button.setAttribute('href', '/dashboard');
+					button.className = button.className.replace(/button--primary/g, 'button--secondary');
+				} else {
+					button.style.display = 'none'; // Hide sign in button when logged in
+				}
+			} else {
+				if (isActionButton) {
+					button.textContent = 'Join Now!';
+					button.setAttribute('href', '/signup');
+					button.className = button.className.replace(/button--secondary/g, 'button--primary');
+				} else {
+					button.style.display = 'inline-flex'; // Show sign in button when logged out
+				}
+			}
+		});
+	}
 
-  // Listen for auth state changes
-  window.addEventListener('auth-state-change', updateNavButton);
-  
-  // Initial check
-  updateNavButton();
+	// Function to handle mobile menu toggle
+	function setupMobileMenu() {
+		const button = document.getElementById('mobile-menu-button');
+		const menu = document.getElementById('mobile-menu');
+		const openIcon = document.getElementById('menu-open-icon');
+		const closeIcon = document.getElementById('menu-close-icon');
+		
+		if (!button || !menu || !openIcon || !closeIcon) return;
+		
+		let isOpen = false;
+		
+		function toggleMenu() {
+			isOpen = !isOpen;
+			menu.classList.toggle('hidden');
+			openIcon.classList.toggle('hidden');
+			closeIcon.classList.toggle('hidden');
+			button.setAttribute('aria-expanded', isOpen.toString());
+		}
+		
+		// Toggle menu on button click
+		button.addEventListener('click', toggleMenu);
+		
+		// Close menu when clicking outside
+		document.addEventListener('click', (event) => {
+			const target = event.target as HTMLElement;
+			if (isOpen && !menu.contains(target) && !button.contains(target)) {
+				toggleMenu();
+			}
+		});
+		
+		// Close menu on escape key
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && isOpen) {
+				toggleMenu();
+			}
+		});
+	}
+
+	// Initialize navigation functionality
+	function initNavigation() {
+		updateNavButtons();
+		setupMobileMenu();
+	}
+
+	// Run on initial load
+	document.addEventListener('DOMContentLoaded', initNavigation);
+	
+	// Run on view transitions
+	document.addEventListener('astro:after-swap', initNavigation);
+	
+	// Listen for auth state changes
+	window.addEventListener('auth-state-change', updateNavButtons);
 </script>

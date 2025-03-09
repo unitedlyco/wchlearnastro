@@ -1,6 +1,14 @@
 import { useState, useEffect } from 'react';
 import Icon from '../ui/icons/Icon';
 
+// Add loading skeleton component
+const LoadingSkeleton = () => (
+  <div className="animate-pulse">
+    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
+    <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+  </div>
+);
+
 export default function StatsCard({ userId }) {
   const [progress, setProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,29 +42,33 @@ export default function StatsCard({ userId }) {
     };
   }, [userId]);
 
+  if (isLoading) {
+    return <LoadingSkeleton />;
+  }
+
   return (
-    <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
-      <div className="flex items-center gap-4">
-        <div className="p-3 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-          <Icon name="mdi:book-open-page-variant" className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        Your Progress
+      </h3>
+      <div className="relative pt-1">
+        <div className="flex mb-2 items-center justify-between">
+          <div>
+            <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-primary-600 bg-primary-200">
+              Course Completion
+            </span>
+          </div>
+          <div className="text-right">
+            <span className="text-xs font-semibold inline-block text-primary-600">
+              {progress}%
+            </span>
+          </div>
         </div>
-        <div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Course Progress</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Track your learning journey</p>
-        </div>
-      </div>
-      <div className="mt-4">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Overall Progress</span>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {isLoading ? '...' : `${progress}%`}
-          </span>
-        </div>
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-          <div 
-            className="bg-primary-600 h-2.5 rounded-full transition-all duration-500 ease-out"
-            style={{ width: `${isLoading ? 0 : progress}%` }}
-          />
+        <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-primary-200">
+          <div
+            style={{ width: `${progress}%` }}
+            className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary-500 transition-all duration-500"
+          ></div>
         </div>
       </div>
     </div>
