@@ -16,7 +16,7 @@ import substackClient from '../../lib/substack.js';
 interface SubstackPost {
 	title: string;
 	link: string;
-	pubDate: string;
+	pubDate: Date;
 	content: string;
 	contentSnippet?: string;
 	guid?: string;
@@ -24,19 +24,7 @@ interface SubstackPost {
 	featuredImage?: string;
 	author?: string;
 	description?: string;
-}
-
-interface PaginationData {
-	totalPages: number;
-	currentPage: number;
-	hasNextPage: boolean;
-	hasPrevPage: boolean;
-}
-
-interface PageProps {
-	pageNum: number;
-	posts: SubstackPost[];
-	totalPages: number;
+	categories?: string[];
 }
 
 // Content
@@ -53,49 +41,27 @@ const header = {
 // Enable prerendering for static builds
 export const prerender = true;
 
-// Get static paths for all pages except page 1 (handled by index.astro)
-export async function getStaticPaths() {
-	try {
-		const posts = await substackClient.getAllPosts();
-		const totalPages = Math.ceil(posts.length / 12); // 12 posts per page
-		
-		// Generate paths for pages 2 onwards
-		return Array.from({ length: totalPages - 1 }, (_, i) => {
-			const pageNum = i + 2; // Start from page 2
-			return {
-				params: { page: pageNum.toString() },
-				props: { 
-					pageNum,
-					posts: posts.slice((pageNum - 1) * 12, pageNum * 12),
-					totalPages
-				}
-			};
-		});
-	} catch (error) {
-		console.error('Error generating static paths:', error);
-		return [];
-	}
-}
-
-// Get page number and posts from props (type-safe)
+// Get page number from URL
 const { page } = Astro.params;
-const { pageNum, posts, totalPages } = Astro.props as PageProps;
 const currentPage = parseInt(page || '1');
 
+// Fetch posts for current page
+const { posts, pagination } = await substackClient.getPaginatedPosts(currentPage);
+
 // Transform posts to match blog format
-const transformedPosts = posts.map((post: SubstackPost) => ({
+const transformedPosts = posts.map((post) => ({
 	title: post.title || 'Untitled Post',
 	description: post.description || '',
-	pubDate: new Date(post.pubDate),
+	pubDate: post.pubDate instanceof Date ? post.pubDate : new Date(post.pubDate),
 	image: post.featuredImage || '/placeholder-image.jpg',
 	author: post.author || 'WCH Team',
 	link: post.link,
-	tags: []
+	tags: post.categories || []
 }));
 
 // Generate pagination URLs
 const prevUrl = currentPage === 2 ? '/substack' : `/substack/${currentPage - 1}`;
-const nextUrl = currentPage < totalPages ? `/substack/${currentPage + 1}` : undefined;
+const nextUrl = pagination.hasNextPage ? `/substack/${currentPage + 1}` : undefined;
 ---
 
 <Layout title={SEO.title} description={SEO.description}>
@@ -105,7 +71,7 @@ const nextUrl = currentPage < totalPages ? `/substack/${currentPage + 1}` : unde
 	
 	<Pagination 
 		currentPage={currentPage} 
-		totalPages={totalPages} 
+		totalPages={pagination.totalPages} 
 		prevUrl={prevUrl} 
 		nextUrl={nextUrl} 
 	/>
