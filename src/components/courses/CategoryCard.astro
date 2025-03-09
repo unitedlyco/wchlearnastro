@@ -1,11 +1,22 @@
-import { Icon } from 'astro-icon/components';
-import type { CourseCategory } from '../../types/courses';
+---
+// Category Card
+// ------------
+// Description: A card component for displaying course categories
 
-interface Props {
-  category: CourseCategory;
-}
+// Components
+import { Icon } from 'astro-icon/components';
+
+// Props
+type Props = {
+  category: {
+    slug: string;
+    name: string;
+    image?: string;
+  };
+};
 
 const { category } = Astro.props;
+---
 
 <a href={`/courses/categories/${category.slug}`} class="block group">
   <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm group-hover:shadow-md transition-shadow duration-200">
